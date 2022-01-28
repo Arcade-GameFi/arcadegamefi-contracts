@@ -28,7 +28,7 @@ const chainIds = {
 };
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
-
+const ALCHEMY_KEY = process.env.ALCHEMY_KEY || "";
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY;
 const HARMONEYSCAN_KEY = process.env.HARMONEYSCAN_KEY;
 
@@ -44,6 +44,12 @@ const config = {
     ropsten: {
       url: `https://ropsten.infura.io/v3/${INFURA_API_KEY}`,
       chainId: chainIds.ropsten,
+      accounts: [pk],
+      gasMultiplier: 1.25
+    },
+    mumbai: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+      chainId: chainIds.mumbai,
       accounts: [pk],
       gasMultiplier: 1.25
     },
