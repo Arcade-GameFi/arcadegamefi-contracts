@@ -12,11 +12,13 @@ contract Loop is ERC20, ERC20Burnable, Ownable {
     constructor(
         string memory _name,
         string memory _symbol
-    ) ERC20(_name, _symbol) {}
-
-    function mint(address _to, uint256 _amount) public onlyOwner returns (bool) {
-        require(_amount > 0, "amount is 0");
-        _mint(_to, _amount);
-        return true;
+    ) ERC20(_name, _symbol) {
+        _mint(msg.sender, 1000000000 * 10 ** decimals());
     }
+
+    // function mint(address _to, uint256 _amount) public onlyOwner returns (bool) {
+    //     require(_amount > 0, "amount is 0");
+    //     _mint(_to, _amount);
+    //     return true;
+    // }
 }
