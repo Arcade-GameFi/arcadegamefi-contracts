@@ -9,5 +9,5 @@ export function getBigNumber(amount:number | string, decimals = 18) {
   return parseUnits(amount.toString(), decimals);
 }
 
-export * from './time'
 export * from './utils'
+export * from './time'

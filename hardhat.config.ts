@@ -7,7 +7,7 @@ import "hardhat-gas-reporter";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const { pk } = require("./secrets.json");
+const { MNEMONIC_SEED } = require("./secrets.json");
 
 const chainIds = {
   ganache: 1337,
@@ -33,36 +33,56 @@ const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY;
 const HARMONEYSCAN_KEY = process.env.HARMONEYSCAN_KEY;
 
 const config = {
-  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      // blockGasLimit: 10000000,
+      blockGasLimit: 10000000,
+      chainId: chainIds.ganache,
+      accounts: {
+        mnemonic: MNEMONIC_SEED
+      },
       // forking: {
-      //   url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`
+      //   // url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`
+      //   url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_KEY}`
       // }
+    },
+    localhost: {
+      url: 'http://127.0.0.1:8545/',
+      chainId: chainIds.ganache,
+      accounts: {
+        mnemonic: MNEMONIC_SEED
+      },
+      gasMultiplier: 1.25
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${INFURA_API_KEY}`,
       chainId: chainIds.ropsten,
-      accounts: [pk],
+      accounts: {
+        mnemonic: MNEMONIC_SEED
+      },
       gasMultiplier: 1.25
     },
     mumbai: {
       url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       chainId: chainIds.mumbai,
-      accounts: [pk],
+      accounts: {
+        mnemonic: MNEMONIC_SEED
+      },
       gasMultiplier: 1.25
     },
     harmonyMainnet: {
       url: 'https://api.harmony.one',
       chainId: chainIds.harmoneyMainnet,
-      accounts: [pk],
+      accounts: {
+        mnemonic: MNEMONIC_SEED
+      },
       gasMultiplier: 1.25
     },
     harmonyTestnet: {
       url: 'https://api.s0.b.hmny.io',
       chainId: chainIds.harmoneyTestnet,
-      accounts: [pk],
+      accounts: {
+        mnemonic: MNEMONIC_SEED
+      },
       gasMultiplier: 1.25
     }
   },

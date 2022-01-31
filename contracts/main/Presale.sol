@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.11;
 
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -9,9 +10,13 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract Presale is Ownable {
     using SafeERC20 for IERC20;
 
+    struct SaleInfo {
+        uint256 stableTokenAmount;
+        uint256 loopTokenAmount;
+    }
+
     mapping(address => bool) public whitelists;
-    mapping(address => uint256) public presaleList;
-    mapping(address => uint256) public presaleTokenList;
+    mapping(address => SaleInfo) public presaleList;
     mapping(address => bool) public acceptTokens;
 
     bool private isPause;
@@ -25,6 +30,9 @@ contract Presale is Ownable {
     uint256 public immutable allowedTokenAmount;
     uint256 public saledToken;
     uint256 public immutable presaleTokenAmount;
+
+    event TokenPurchased(address userAddress, uint256 purchasedAmount);
+    event TokenClaimed(address userAddress, uint256 purchasedAmount);
 
     constructor(
         address _loopAddress, 
@@ -55,7 +63,8 @@ contract Presale is Ownable {
     }
 
     modifier checkEventTime() {
-        require(block.timestamp >= saleStartTime && block.timestamp <= saleEndTime, "Presale ended");
+        console.log('timestamp is: %s, %s, %s', block.timestamp, saleStartTime, saleEndTime);
+        require(block.timestamp >= saleStartTime && block.timestamp <= saleEndTime, "Out of presale period");
         _;
     }
 
@@ -68,10 +77,14 @@ contract Presale is Ownable {
         return saledToken;
     }
 
-    function setPause(bool _pause) external onlyOwner {
+    function stopContract(bool _pause) external onlyOwner {
         isPause = _pause;
     }
-
+    
+    function getPauseStatus() external view returns(bool) {
+        return isPause;
+    }
+    
     function addWhitelist(address whiteAddress) external executable onlyOwner {
         whitelists[whiteAddress] = true;
     }
@@ -81,8 +94,9 @@ contract Presale is Ownable {
     }
 
     function buyToken(address stableTokenAddress, uint256 amount) external executable checkEventTime {
-        require(whitelists[msg.sender] != false, "Not whitelist address");
+        require(whitelists[msg.sender] == true, "Not whitelist address");
         require(acceptTokens[stableTokenAddress] == true, "Not stableToken address");
+        SaleInfo storage saleInfo = presaleList[msg.sender];
         uint8 tokenDecimal = ERC20(stableTokenAddress).decimals();
         uint256 tokenAmount = amount;
         if (tokenDecimal < maxDecimals) {
@@ -90,28 +104,30 @@ contract Presale is Ownable {
         }
         uint256 loopTokenAmount = tokenAmount * 10 ** ERC20(loopAddress).decimals() / tokenPrice;
         require(saledToken + loopTokenAmount <= presaleTokenAmount, "All Loop Tokens are sold out");
-        require(
-                (block.timestamp >= saleEndTime - fcfsMinutes * 1 minutes) && 
-                (presaleList[msg.sender] + tokenAmount <= allowedTokenAmount * 2), 
+        if (block.timestamp >= saleEndTime - fcfsMinutes * 1 minutes) {
+            require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * 2, 
                 "Exceeding buy token limit during FCFS period");
-        require(
-                (block.timestamp < saleEndTime - fcfsMinutes * 1 minutes) && 
-                (presaleList[msg.sender] + tokenAmount <= allowedTokenAmount), 
+        } else if (block.timestamp < saleEndTime - fcfsMinutes * 1 minutes) {
+            require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount, 
                 "Exceeding buy token limit during presale period");
-        presaleList[msg.sender] = presaleList[msg.sender] + tokenAmount;
-        presaleTokenList[msg.sender] = presaleTokenList[msg.sender] + loopTokenAmount;
+        }
+        saleInfo.stableTokenAmount = saleInfo.stableTokenAmount + tokenAmount;
+        saleInfo.loopTokenAmount = saleInfo.loopTokenAmount + loopTokenAmount;
         saledToken = saledToken + loopTokenAmount;
         IERC20(stableTokenAddress).safeTransferFrom(msg.sender, address(this), amount);
+        emit TokenPurchased(msg.sender, loopTokenAmount);
     }
     
     function claimToken() external executable checkAfterTime returns (uint loopTokenAmount){
-        require(presaleTokenList[msg.sender] > 0, "No claimToken amount");
+        SaleInfo storage saleInfo = presaleList[msg.sender];
+        require(saleInfo.loopTokenAmount > 0, "No claimToken amount");
 
-        loopTokenAmount = presaleTokenList[msg.sender];
-        presaleList[msg.sender] = 0;
-        presaleTokenList[msg.sender] = 0;
+        loopTokenAmount = saleInfo.loopTokenAmount;
+        saleInfo.stableTokenAmount = 0;
+        saleInfo.loopTokenAmount = 0;
         IERC20(loopAddress).safeApprove(msg.sender, loopTokenAmount);
         IERC20(loopAddress).safeTransferFrom(address(this), msg.sender, loopTokenAmount);
+        emit TokenClaimed(msg.sender, loopTokenAmount);
     }
 
     function withdrawAllToken(address withdrawAddress, address[] calldata stableTokens) external executable onlyOwner checkAfterTime {
