@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.11;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -63,7 +62,6 @@ contract Presale is Ownable {
     }
 
     modifier checkEventTime() {
-        console.log('timestamp is: %s, %s, %s', block.timestamp, saleStartTime, saleEndTime);
         require(block.timestamp >= saleStartTime && block.timestamp <= saleEndTime, "Out of presale period");
         _;
     }
@@ -106,10 +104,10 @@ contract Presale is Ownable {
         require(saledToken + loopTokenAmount <= presaleTokenAmount, "All Loop Tokens are sold out");
         if (block.timestamp >= saleEndTime - fcfsMinutes * 1 minutes) {
             require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * 2, 
-                "Exceeding buy token limit during FCFS period");
+                "Exceeding presale token limit during FCFS period");
         } else if (block.timestamp < saleEndTime - fcfsMinutes * 1 minutes) {
             require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount, 
-                "Exceeding buy token limit during presale period");
+                "Exceeding presale token limit during round1 period");
         }
         saleInfo.stableTokenAmount = saleInfo.stableTokenAmount + tokenAmount;
         saleInfo.loopTokenAmount = saleInfo.loopTokenAmount + loopTokenAmount;
@@ -118,32 +116,35 @@ contract Presale is Ownable {
         emit TokenPurchased(msg.sender, loopTokenAmount);
     }
     
-    function claimToken() external executable checkAfterTime returns (uint loopTokenAmount){
+    function claimToken() external executable checkAfterTime {
         SaleInfo storage saleInfo = presaleList[msg.sender];
         require(saleInfo.loopTokenAmount > 0, "No claimToken amount");
 
-        loopTokenAmount = saleInfo.loopTokenAmount;
+        uint loopTokenAmount = saleInfo.loopTokenAmount;
         saleInfo.stableTokenAmount = 0;
         saleInfo.loopTokenAmount = 0;
-        IERC20(loopAddress).safeApprove(msg.sender, loopTokenAmount);
-        IERC20(loopAddress).safeTransferFrom(address(this), msg.sender, loopTokenAmount);
+        uint balance = IERC20(loopAddress).balanceOf(address(this));
+        require(balance > 0, "Insufficient balance");
+        if (balance < loopTokenAmount) {
+            loopTokenAmount = balance;
+        }
+        IERC20(loopAddress).safeTransfer(msg.sender, loopTokenAmount);
         emit TokenClaimed(msg.sender, loopTokenAmount);
     }
 
     function withdrawAllToken(address withdrawAddress, address[] calldata stableTokens) external executable onlyOwner checkAfterTime {
         uint loopTokenAmount = IERC20(loopAddress).balanceOf(address(this));
-        IERC20(loopAddress).safeApprove(withdrawAddress, loopTokenAmount);
-        IERC20(loopAddress).safeTransferFrom(address(this), withdrawAddress, loopTokenAmount);
+        IERC20(loopAddress).safeTransfer(withdrawAddress, loopTokenAmount);
         for (uint i = 0; i < stableTokens.length; i ++) {
             uint stableTokenAmount = IERC20(stableTokens[i]).balanceOf(address(this));
-            IERC20(stableTokens[i]).safeApprove(withdrawAddress, stableTokenAmount);
-            IERC20(stableTokens[i]).safeTransferFrom(address(this), withdrawAddress, stableTokenAmount);
+            IERC20(stableTokens[i]).safeTransfer(withdrawAddress, stableTokenAmount);
         }
     }
 
     function giveBackToken(address withdrawAddress, address tokenAddress) external executable onlyOwner checkAfterTime {
+        require(acceptTokens[tokenAddress] == false, "Can not withdraw stable tokens");
+        require(loopAddress != tokenAddress, "Can not withdraw loop tokens");
         uint tokenAmount = IERC20(tokenAddress).balanceOf(address(this));
-        IERC20(tokenAddress).safeApprove(withdrawAddress, tokenAmount);
-        IERC20(tokenAddress).safeTransferFrom(address(this), withdrawAddress, tokenAmount);
+        IERC20(tokenAddress).safeTransfer(withdrawAddress, tokenAmount);
     }
 }

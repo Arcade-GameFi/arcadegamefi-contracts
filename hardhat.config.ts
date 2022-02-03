@@ -89,7 +89,9 @@ const config = {
   etherscan: {
     apiKey: {
       mainnet: ETHERSCAN_KEY,
-      ropsten: ETHERSCAN_KEY
+      ropsten: ETHERSCAN_KEY,
+      harmonyMainnet: HARMONEYSCAN_KEY,
+      harmonyTestnet: HARMONEYSCAN_KEY,
     },
   },
   solidity: {
