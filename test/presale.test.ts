@@ -106,7 +106,7 @@ describe('presale-test', () => {
       getBigNumber(presaleTokenAmount)
       )) as Presale
     await presaleContract.deployed()
-    console.log('PresaleContract deployed')
+    console.log('Presale Contract deployed')
   })
 
   describe('Deposit LoopToken into Presale Contract', async () => {
@@ -169,7 +169,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr1).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr1).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Saled Token Amount2:', formatUnits(await presaleContract.getSaledToken()))
+      console.log('Sold Token Amount2:', formatUnits(await presaleContract.getSoldToken()))
     })
 
     it('round1 period - purchase tokens2 ', async () => {
@@ -179,7 +179,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr2).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr2).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr2).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Saled Token Amount3:', formatUnits(await presaleContract.getSaledToken()))
+      console.log('Sold Token Amount3:', formatUnits(await presaleContract.getSoldToken()))
     })
     
     it('round1 period - purchase tokens3 ', async () => {
@@ -189,7 +189,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr3).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr3).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr3).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Saled Token Amount2:', formatUnits(await presaleContract.getSaledToken()))
+      console.log('Sold Token Amount2:', formatUnits(await presaleContract.getSoldToken()))
     })
 
     it('Exceeding purchase token limit during round1 period ', async () => {
@@ -221,7 +221,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr1).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr1).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Saled Token Amount4:', formatUnits(await presaleContract.getSaledToken()))
+      console.log('Sold Token Amount4:', formatUnits(await presaleContract.getSoldToken()))
     })
     
     it('FCFS period - purchase tokens2 ', async () => {
@@ -231,7 +231,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr2).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr2).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr2).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Saled Token Amount5:', formatUnits(await presaleContract.getSaledToken()))
+      console.log('Sold Token Amount5:', formatUnits(await presaleContract.getSoldToken()))
     })
 
     it('FCFS period - purchase tokens3 ', async () => {
@@ -240,7 +240,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr3).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr3).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
 
-      console.log('Saled Token Amount6:', formatUnits(await presaleContract.getSaledToken()))
+      console.log('Sold Token Amount6:', formatUnits(await presaleContract.getSoldToken()))
     })
 
     it('Exceeding purchase token limit during FCFS period ', async () => {
@@ -284,8 +284,8 @@ describe('presale-test', () => {
       console.log('LOOP in addr2:', loopToken2)
       console.log('LOOP in addr3:', loopToken3)
       const loopSumAmount = Number(loopToken1) + Number(loopToken2) + Number(loopToken3)
-      console.log('Total presaled token:', loopSumAmount)
-      expect(await presaleContract.getSaledToken()).to.equal(getBigNumber(loopSumAmount))
+      console.log('Total presold token:', loopSumAmount)
+      expect(await presaleContract.getSoldToken()).to.equal(getBigNumber(loopSumAmount))
     })
 
     it('No claimToken amount ', async () => {
