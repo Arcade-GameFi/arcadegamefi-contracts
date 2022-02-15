@@ -22,14 +22,4 @@ contract Token is ERC20, ERC20Burnable, Ownable {
     function decimals() public view virtual override returns (uint8) {
         return _decimals;
     }
-
-    function setupDecimals(uint8 _ddecimals) public {
-        _decimals = _ddecimals;
-    }
-
-    function mint(address _to, uint256 _amount) public onlyOwner returns (bool) {
-        require(_amount > 0, "amount is 0");
-        _mint(_to, _amount);
-        return true;
-    }
 }
