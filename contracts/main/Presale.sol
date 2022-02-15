@@ -22,12 +22,12 @@ contract Presale is Ownable {
     uint8 public constant maxDecimals = 18;
 
     address public immutable loopAddress;
-    uint256 public immutable saleStartTime;
-    uint256 public immutable saleEndTime;
+    uint256 public saleStartTime;
+    uint256 public saleEndTime;
     uint256 public immutable fcfsMinutes;
     uint256 public immutable tokenPrice;
     uint256 public immutable allowedTokenAmount;
-    uint256 public saledToken;
+    uint256 public soldToken;
     uint256 public immutable presaleTokenAmount;
 
     event TokenPurchased(address userAddress, uint256 purchasedAmount);
@@ -43,6 +43,13 @@ contract Presale is Ownable {
         address[] memory _acceptTokens,
         uint256 _presaleTokenAmount
         ) {
+
+        require(_saleEndTime >= _saleStartTime);
+        require(_fcfsMinutes >= 0);
+        require(_tokenPrice > 0);
+        require(_allowedTokenAmount >= 0);
+        require(_presaleTokenAmount >= 0);
+
         saleStartTime = _saleStartTime;
         saleEndTime = _saleEndTime;
         fcfsMinutes = _fcfsMinutes;
@@ -71,8 +78,16 @@ contract Presale is Ownable {
         _;
     }
 
-    function getSaledToken() public view returns(uint) {
-        return saledToken;
+    function setStartTime(uint256 _saleStartTime) external executable onlyOwner {
+        saleStartTime = _saleStartTime;
+    }
+
+    function setEndTime(uint256 _saleEndTime) external executable onlyOwner {
+        saleEndTime = _saleEndTime;
+    }
+
+    function getSoldToken() public view returns(uint) {
+        return soldToken;
     }
 
     function stopContract(bool _pause) external onlyOwner {
@@ -91,17 +106,31 @@ contract Presale is Ownable {
         whitelists[whiteAddress] = false;
     }
 
+	function addAcceptTokens(address acceptTokenAddress) external executable onlyOwner {
+        acceptTokens[acceptTokenAddress] = true;
+    }
+
+    function removeAcceptTokens(address acceptTokenAddress) external executable onlyOwner {
+        acceptTokens[acceptTokenAddress] = false;
+    }
+
     function buyToken(address stableTokenAddress, uint256 amount) external executable checkEventTime {
         require(whitelists[msg.sender] == true, "Not whitelist address");
         require(acceptTokens[stableTokenAddress] == true, "Not stableToken address");
+
         SaleInfo storage saleInfo = presaleList[msg.sender];
+
         uint8 tokenDecimal = ERC20(stableTokenAddress).decimals();
         uint256 tokenAmount = amount;
+
         if (tokenDecimal < maxDecimals) {
             tokenAmount = tokenAmount * 10 ** (maxDecimals - tokenDecimal);
         }
-        uint256 loopTokenAmount = tokenAmount * 10 ** ERC20(loopAddress).decimals() / tokenPrice;
-        require(saledToken + loopTokenAmount <= presaleTokenAmount, "All Loop Tokens are sold out");
+
+        uint256 loopTokenAmount = tokenAmount / tokenPrice * 10 ** ERC20(loopAddress).decimals();
+
+        require(soldToken + loopTokenAmount <= presaleTokenAmount, "All Loop Tokens are sold out");
+
         if (block.timestamp >= saleEndTime - fcfsMinutes * 1 minutes) {
             require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * 2, 
                 "Exceeding presale token limit during FCFS period");
@@ -109,10 +138,14 @@ contract Presale is Ownable {
             require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount, 
                 "Exceeding presale token limit during round1 period");
         }
+
         saleInfo.stableTokenAmount = saleInfo.stableTokenAmount + tokenAmount;
         saleInfo.loopTokenAmount = saleInfo.loopTokenAmount + loopTokenAmount;
-        saledToken = saledToken + loopTokenAmount;
+
+        soldToken = soldToken + loopTokenAmount;
+
         IERC20(stableTokenAddress).safeTransferFrom(msg.sender, address(this), amount);
+
         emit TokenPurchased(msg.sender, loopTokenAmount);
     }
     
@@ -133,8 +166,11 @@ contract Presale is Ownable {
     }
 
     function withdrawAllToken(address withdrawAddress, address[] calldata stableTokens) external executable onlyOwner checkAfterTime {
+        //Withdraw all leftover LOOP tokens
         uint loopTokenAmount = IERC20(loopAddress).balanceOf(address(this));
         IERC20(loopAddress).safeTransfer(withdrawAddress, loopTokenAmount);
+        
+        //Withdraw all stablecoins
         for (uint i = 0; i < stableTokens.length; i ++) {
             uint stableTokenAmount = IERC20(stableTokens[i]).balanceOf(address(this));
             IERC20(stableTokens[i]).safeTransfer(withdrawAddress, stableTokenAmount);
@@ -142,8 +178,8 @@ contract Presale is Ownable {
     }
 
     function giveBackToken(address withdrawAddress, address tokenAddress) external executable onlyOwner checkAfterTime {
-        require(acceptTokens[tokenAddress] == false, "Can not withdraw stable tokens");
-        require(loopAddress != tokenAddress, "Can not withdraw loop tokens");
+        require(acceptTokens[tokenAddress] == false, "Cannot withdraw pre-sale swap stablecoin tokens from presale using this function.");
+        require(loopAddress != tokenAddress, "Cannot withdraw Loop tokens from presale using this function.");
         uint tokenAmount = IERC20(tokenAddress).balanceOf(address(this));
         IERC20(tokenAddress).safeTransfer(withdrawAddress, tokenAmount);
     }
