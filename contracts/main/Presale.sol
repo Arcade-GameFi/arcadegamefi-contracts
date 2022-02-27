@@ -46,33 +46,30 @@ contract Presale is AccessControl {
         address _loopAddress, 
         uint256 _saleStartTime, 
         uint256 _saleEndTime, 
-        uint256 _round2Minutes,
-        uint256 _fcfsMinutes, 
         uint256 _tokenPrice, 
         uint256 _allowedTokenAmount,
-        uint256 _round2Multiplier,
-        uint256 _fcfsMultiplier,
+        SaleRules memory _saleRules,
         address[] memory _acceptTokens,
         uint256 _presaleTokenAmount
         ) {
 
         require(_saleEndTime >= _saleStartTime);
-        require(_round2Minutes >= 0);
-        require(_fcfsMinutes >= 0);
+        require(_saleRules.round2Minutes >= 0);
+        require(_saleRules.fcfsMinutes >= 0);
         require(_tokenPrice > 0);
         require(_allowedTokenAmount >= 0);
         require(_presaleTokenAmount >= 0);
-        require(_round2Multiplier >= 1);
-        require(_fcfsMultiplier >= 1);
+        require(_saleRules.round2Multiplier >= 1);
+        require(_saleRules.fcfsMultiplier >= 1);
 
         saleStartTime = _saleStartTime;
         saleEndTime = _saleEndTime;
-        saleRules.round2Minutes = _round2Minutes;
-        saleRules.fcfsMinutes = _fcfsMinutes;
+        saleRules.round2Minutes = _saleRules.round2Minutes;
+        saleRules.fcfsMinutes = _saleRules.fcfsMinutes;
         tokenPrice = _tokenPrice;
         allowedTokenAmount = _allowedTokenAmount;
-        saleRules.round2Multiplier = _round2Multiplier;
-        saleRules.fcfsMultiplier = _fcfsMultiplier;
+        saleRules.round2Multiplier = _saleRules.round2Multiplier;
+        saleRules.fcfsMultiplier = _saleRules.fcfsMultiplier;
         
         loopAddress = _loopAddress;
         for (uint i = 0; i < _acceptTokens.length; i ++) {
