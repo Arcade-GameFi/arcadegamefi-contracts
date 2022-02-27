@@ -27,13 +27,13 @@ describe('presale-test', () => {
   let busd: Token
   let usdt: Token
   let meme: Token
-  const saleStart_20220204_11_00_00_GMT_Time = 1643972400 //2022-02-04 11:00:00 GMT
-  const saleEnd_20220204_17_00_00_GMT_Time = 1643994000    //2022-02-04 17:00:00 GMT
-  const fcfsMinutes = '20'
-  const tokenPrice = '0.008'
-  const allowedTokenAmount = '500';
+  const saleStart_20220204_11_00_00_GMT_Time = 1646079668 //2022-02-04 11:00:00 GMT
+  const saleEnd_20220204_17_00_00_GMT_Time = 1646101268    //2022-02-04 17:00:00 GMT
+  const fcfsMinutes = 20
+  const tokenPrice = '0.01'
+  const allowedTokenAmount = '500'
   // const presaleTokenAmount = '60000000'
-  const presaleTokenAmount = '389000'
+  const presaleTokenAmount = '290000'
 
   // const stableTokens = {
   //   USDC: '0x32dB725138A0546BD1e5688C95cd4f28698E6E94',
@@ -87,7 +87,7 @@ describe('presale-test', () => {
     console.log('addr3-BUSD:', formatUnits(await busd.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.BUSD))
     console.log('addr3-USDT:', formatUnits(await usdt.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.USDT))
 
-    loopContract = (await TokenContractFactory.deploy('LOOP', 'LOOP', 18)) as Token
+    loopContract = (await TokenContractFactory.deploy('LOOP', 'LOOP', TOKEN_DECIMAL.LOOP)) as Token
     await loopContract.deployed()
     console.log('LoopToken deployed')
     const PresaleContractFactory = await ethers.getContractFactory('Presale')
@@ -213,7 +213,7 @@ describe('presale-test', () => {
     })
 
     it('FCFS period - purchase tokens1 ', async () => {
-      await advanceTime(6*3600 - 20*60)
+      await advanceTime(saleEnd_20220204_17_00_00_GMT_Time - saleStart_20220204_11_00_00_GMT_Time - fcfsMinutes * 60)
 
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await busd.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
@@ -234,15 +234,6 @@ describe('presale-test', () => {
       console.log('Sold Token Amount5:', formatUnits(await presaleContract.getSoldToken()))
     })
 
-    it('FCFS period - purchase tokens3 ', async () => {
-      await usdc.connect(addr3).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
-      await busd.connect(addr3).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
-      await presaleContract.connect(addr3).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
-      await presaleContract.connect(addr3).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
-
-      console.log('Sold Token Amount6:', formatUnits(await presaleContract.getSoldToken()))
-    })
-
     it('Exceeding purchase token limit during FCFS period ', async () => {
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr1).buyToken(
@@ -257,11 +248,21 @@ describe('presale-test', () => {
         ).to.be.revertedWith('Exceeding presale token limit during FCFS period')
     })
 
+    it('FCFS period - purchase tokens3 ', async () => {
+      await usdc.connect(addr3).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
+      await busd.connect(addr3).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
+      await presaleContract.connect(addr3).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
+      await presaleContract.connect(addr3).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
+
+      console.log('Sold Token Amount6:', formatUnits(await presaleContract.getSoldToken()))
+    })
+
     it('All Loop tokens are sold out', async () => {
       await usdt.connect(addr3).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDT))
+      
       await expect(presaleContract.connect(addr3).buyToken(
         usdt.address, 
-        getBigNumber(300, TOKEN_DECIMAL.USDT))
+        getBigNumber(100, TOKEN_DECIMAL.USDT))
         ).to.be.revertedWith('All Loop Tokens are sold out')
     })
 
@@ -335,14 +336,14 @@ describe('presale-test', () => {
       await expect(presaleContract.giveBackToken(
         await addr1.getAddress(),
         usdc.address
-      )).to.be.revertedWith('Can not withdraw stable tokens')
+      )).to.be.revertedWith('Cannot withdraw pre-sale swap stablecoin tokens from presale using this function.')
     })
 
     it('Can not withdraw loop tokens ', async () => {
       await expect(presaleContract.giveBackToken(
         await addr1.getAddress(),
         loopContract.address
-      )).to.be.revertedWith('Can not withdraw loop tokens')
+      )).to.be.revertedWith('Cannot withdraw Loop tokens from presale using this function.')
     })
 
     it('give back tokens ', async () => {
