@@ -6,6 +6,7 @@ export enum TOKEN_DECIMAL {
   USDC = 6,
   BUSD = 18,
   USDT = 6,
+  LOOP = 18,
   DEFAULT = ''
 }
 

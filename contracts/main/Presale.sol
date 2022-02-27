@@ -3,10 +3,10 @@ pragma solidity ^0.8.11;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Presale is Ownable {
+contract Presale is AccessControl {
     using SafeERC20 for IERC20;
 
     struct SaleInfo {
@@ -22,11 +22,20 @@ contract Presale is Ownable {
     uint8 public constant maxDecimals = 18;
 
     address public immutable loopAddress;
+
+    struct SaleRules {
+        uint256 round2Multiplier;
+        uint256 fcfsMultiplier;
+        uint256 round2Minutes;
+        uint256 fcfsMinutes;
+    }
+
+    SaleRules public saleRules;
     uint256 public saleStartTime;
     uint256 public saleEndTime;
-    uint256 public immutable fcfsMinutes;
     uint256 public immutable tokenPrice;
     uint256 public immutable allowedTokenAmount;
+    
     uint256 public soldToken;
     uint256 public immutable presaleTokenAmount;
 
@@ -37,30 +46,41 @@ contract Presale is Ownable {
         address _loopAddress, 
         uint256 _saleStartTime, 
         uint256 _saleEndTime, 
+        uint256 _round2Minutes,
         uint256 _fcfsMinutes, 
         uint256 _tokenPrice, 
         uint256 _allowedTokenAmount,
+        uint256 _round2Multiplier,
+        uint256 _fcfsMultiplier,
         address[] memory _acceptTokens,
         uint256 _presaleTokenAmount
         ) {
 
         require(_saleEndTime >= _saleStartTime);
+        require(_round2Minutes >= 0);
         require(_fcfsMinutes >= 0);
         require(_tokenPrice > 0);
         require(_allowedTokenAmount >= 0);
         require(_presaleTokenAmount >= 0);
+        require(_round2Multiplier >= 1);
+        require(_fcfsMultiplier >= 1);
 
         saleStartTime = _saleStartTime;
         saleEndTime = _saleEndTime;
-        fcfsMinutes = _fcfsMinutes;
+        saleRules.round2Minutes = _round2Minutes;
+        saleRules.fcfsMinutes = _fcfsMinutes;
         tokenPrice = _tokenPrice;
         allowedTokenAmount = _allowedTokenAmount;
+        saleRules.round2Multiplier = _round2Multiplier;
+        saleRules.fcfsMultiplier = _fcfsMultiplier;
+        
         loopAddress = _loopAddress;
         for (uint i = 0; i < _acceptTokens.length; i ++) {
             acceptTokens[_acceptTokens[i]] = true;
         }
         presaleTokenAmount = _presaleTokenAmount;
         isPause = false;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     modifier executable() {
@@ -78,11 +98,11 @@ contract Presale is Ownable {
         _;
     }
 
-    function setStartTime(uint256 _saleStartTime) external executable onlyOwner {
+    function setStartTime(uint256 _saleStartTime) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
         saleStartTime = _saleStartTime;
     }
 
-    function setEndTime(uint256 _saleEndTime) external executable onlyOwner {
+    function setEndTime(uint256 _saleEndTime) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
         saleEndTime = _saleEndTime;
     }
 
@@ -90,7 +110,7 @@ contract Presale is Ownable {
         return soldToken;
     }
 
-    function stopContract(bool _pause) external onlyOwner {
+    function stopContract(bool _pause) external onlyRole(DEFAULT_ADMIN_ROLE) {
         isPause = _pause;
     }
     
@@ -98,30 +118,30 @@ contract Presale is Ownable {
         return isPause;
     }
     
-    function addWhitelist(address whiteAddress) external executable onlyOwner {
-        whitelists[whiteAddress] = true;
+    function addWhitelist(address _whiteAddress) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        whitelists[_whiteAddress] = true;
     }
 
-    function removeWhitelist(address whiteAddress) external executable onlyOwner {
-        whitelists[whiteAddress] = false;
+    function removeWhitelist(address _whiteAddress) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        whitelists[_whiteAddress] = false;
     }
 
-	function addAcceptTokens(address acceptTokenAddress) external executable onlyOwner {
-        acceptTokens[acceptTokenAddress] = true;
+	function addAcceptTokens(address _acceptTokenAddress) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        acceptTokens[_acceptTokenAddress] = true;
     }
 
-    function removeAcceptTokens(address acceptTokenAddress) external executable onlyOwner {
-        acceptTokens[acceptTokenAddress] = false;
+    function removeAcceptTokens(address _acceptTokenAddress) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        acceptTokens[_acceptTokenAddress] = false;
     }
 
-    function buyToken(address stableTokenAddress, uint256 amount) external executable checkEventTime {
+    function buyToken(address _stableTokenAddress, uint256 _amount) external executable checkEventTime {
         require(whitelists[msg.sender] == true, "Not whitelist address");
-        require(acceptTokens[stableTokenAddress] == true, "Not stableToken address");
+        require(acceptTokens[_stableTokenAddress] == true, "Not stableToken address");
 
         SaleInfo storage saleInfo = presaleList[msg.sender];
 
-        uint8 tokenDecimal = ERC20(stableTokenAddress).decimals();
-        uint256 tokenAmount = amount;
+        uint8 tokenDecimal = ERC20(_stableTokenAddress).decimals();
+        uint256 tokenAmount = _amount;
 
         if (tokenDecimal < maxDecimals) {
             tokenAmount = tokenAmount * 10 ** (maxDecimals - tokenDecimal);
@@ -131,12 +151,15 @@ contract Presale is Ownable {
 
         require(soldToken + loopTokenAmount <= presaleTokenAmount, "All Loop Tokens are sold out");
 
-        if (block.timestamp >= saleEndTime - fcfsMinutes * 1 minutes) {
-            require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * 2, 
+        if (block.timestamp >= saleEndTime - saleRules.fcfsMinutes * 1 minutes) {
+            require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * saleRules.fcfsMultiplier, 
                 "Exceeding presale token limit during FCFS period");
-        } else if (block.timestamp < saleEndTime - fcfsMinutes * 1 minutes) {
+        } else if (block.timestamp < saleEndTime - saleRules.round2Minutes * 1 minutes) {
             require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount, 
                 "Exceeding presale token limit during round1 period");
+        } else if (block.timestamp >= saleEndTime - saleRules.round2Minutes * 1 minutes && block.timestamp < saleEndTime - saleRules.fcfsMinutes * 1 minutes) {
+            require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * saleRules.round2Multiplier, 
+                "Exceeding presale token limit during round2 period");
         }
 
         saleInfo.stableTokenAmount = saleInfo.stableTokenAmount + tokenAmount;
@@ -144,7 +167,7 @@ contract Presale is Ownable {
 
         soldToken = soldToken + loopTokenAmount;
 
-        IERC20(stableTokenAddress).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(_stableTokenAddress).safeTransferFrom(msg.sender, address(this), _amount);
 
         emit TokenPurchased(msg.sender, loopTokenAmount);
     }
@@ -165,22 +188,22 @@ contract Presale is Ownable {
         emit TokenClaimed(msg.sender, loopTokenAmount);
     }
 
-    function withdrawAllToken(address withdrawAddress, address[] calldata stableTokens) external executable onlyOwner checkAfterTime {
+    function withdrawAllToken(address _withdrawAddress, address[] calldata _stableTokens) external executable onlyRole(DEFAULT_ADMIN_ROLE) checkAfterTime {
         //Withdraw all leftover LOOP tokens
         uint loopTokenAmount = IERC20(loopAddress).balanceOf(address(this));
-        IERC20(loopAddress).safeTransfer(withdrawAddress, loopTokenAmount);
+        IERC20(loopAddress).safeTransfer(_withdrawAddress, loopTokenAmount);
         
         //Withdraw all stablecoins
-        for (uint i = 0; i < stableTokens.length; i ++) {
-            uint stableTokenAmount = IERC20(stableTokens[i]).balanceOf(address(this));
-            IERC20(stableTokens[i]).safeTransfer(withdrawAddress, stableTokenAmount);
+        for (uint i = 0; i < _stableTokens.length; i ++) {
+            uint stableTokenAmount = IERC20(_stableTokens[i]).balanceOf(address(this));
+            IERC20(_stableTokens[i]).safeTransfer(_withdrawAddress, stableTokenAmount);
         }
     }
 
-    function giveBackToken(address withdrawAddress, address tokenAddress) external executable onlyOwner checkAfterTime {
-        require(acceptTokens[tokenAddress] == false, "Cannot withdraw pre-sale swap stablecoin tokens from presale using this function.");
-        require(loopAddress != tokenAddress, "Cannot withdraw Loop tokens from presale using this function.");
-        uint tokenAmount = IERC20(tokenAddress).balanceOf(address(this));
-        IERC20(tokenAddress).safeTransfer(withdrawAddress, tokenAmount);
+    function giveBackToken(address _withdrawAddress, address _tokenAddress) external executable onlyRole(DEFAULT_ADMIN_ROLE) checkAfterTime {
+        require(acceptTokens[_tokenAddress] == false, "Cannot withdraw pre-sale swap stablecoin tokens from presale using this function.");
+        require(loopAddress != _tokenAddress, "Cannot withdraw Loop tokens from presale using this function.");
+        uint tokenAmount = IERC20(_tokenAddress).balanceOf(address(this));
+        IERC20(_tokenAddress).safeTransfer(_withdrawAddress, tokenAmount);
     }
 }
