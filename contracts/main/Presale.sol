@@ -10,8 +10,10 @@ contract Presale is AccessControl {
     using SafeERC20 for IERC20;
 
     struct SaleInfo {
-        uint256 stableTokenAmount;
-        uint256 loopTokenAmount;
+        uint256 stableTokenAmount; //Total allocation bought in stablecoins
+        uint256 loopTokenAmount; //Total bought LOOP tokens after IDO
+        uint256 claimedLoopTokenAmount; //Total claimed by user so far
+        uint8 nextVestingIndex; //Pointer to next claimable tranche
     }
 
     mapping(address => bool) public whitelists;
@@ -30,7 +32,14 @@ contract Presale is AccessControl {
         uint256 fcfsMinutes;
     }
 
+    struct VestingTranche {
+        uint256 Date; //UNIX Timestamp of Vesting
+        uint16 Percentage; //Percentage Vested in Basis points 10,000 = 100%
+    }
+
     SaleRules public saleRules;
+    VestingTranche[] public vestingSchedule;
+
     uint256 public saleStartTime;
     uint256 public saleEndTime;
     uint256 public immutable tokenPrice;
@@ -49,6 +58,7 @@ contract Presale is AccessControl {
         uint256 _tokenPrice, 
         uint256 _allowedTokenAmount,
         SaleRules memory _saleRules,
+        VestingTranche[] memory _vestingSchedule,
         address[] memory _acceptTokens,
         uint256 _presaleTokenAmount
         ) {
@@ -61,11 +71,23 @@ contract Presale is AccessControl {
         require(_presaleTokenAmount >= 0);
         require(_saleRules.round2Multiplier >= 1);
         require(_saleRules.fcfsMultiplier >= 1);
+        require(_vestingSchedule.length > 0);
+        
+
 
         saleStartTime = _saleStartTime;
         saleEndTime = _saleEndTime;
         saleRules.round2Minutes = _saleRules.round2Minutes;
         saleRules.fcfsMinutes = _saleRules.fcfsMinutes;
+
+        //Assign vesting vesting schedule
+        for(uint i = 0; i < _vestingSchedule.length; i++) {
+            vestingSchedule.push(_vestingSchedule[i]);
+        }
+
+        require(checkVestingPercentage(_vestingSchedule), "Vesting percentages don't add up to 100%");
+        require(checkVestingScheduleOrdered(_vestingSchedule), "Vesting schedule is not ordered from older to newest");
+
         tokenPrice = _tokenPrice;
         allowedTokenAmount = _allowedTokenAmount;
         saleRules.round2Multiplier = _saleRules.round2Multiplier;
@@ -132,7 +154,13 @@ contract Presale is AccessControl {
     }
 
     function buyToken(address _stableTokenAddress, uint256 _amount) external executable checkEventTime {
-        require(whitelists[msg.sender] == true, "Not whitelist address");
+        require(soldToken != presaleTokenAmount, "All Loop Tokens are sold out");
+        
+        if(block.timestamp < saleEndTime - saleRules.fcfsMinutes * 1 minutes) {
+            require(whitelists[msg.sender] == true, "Not whitelist address"); //Enforce Whitelist before FCFS round
+        }
+        
+
         require(acceptTokens[_stableTokenAddress] == true, "Not stableToken address");
 
         SaleInfo storage saleInfo = presaleList[msg.sender];
@@ -146,7 +174,7 @@ contract Presale is AccessControl {
 
         uint256 loopTokenAmount = tokenAmount / tokenPrice * 10 ** ERC20(loopAddress).decimals();
 
-        require(soldToken + loopTokenAmount <= presaleTokenAmount, "All Loop Tokens are sold out");
+        require(soldToken + loopTokenAmount <= presaleTokenAmount, "Cannot buy more LOOP tokens than amount up for presale");
 
         if (block.timestamp >= saleEndTime - saleRules.fcfsMinutes * 1 minutes) {
             require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * saleRules.fcfsMultiplier, 
@@ -161,6 +189,8 @@ contract Presale is AccessControl {
 
         saleInfo.stableTokenAmount = saleInfo.stableTokenAmount + tokenAmount;
         saleInfo.loopTokenAmount = saleInfo.loopTokenAmount + loopTokenAmount;
+        saleInfo.claimedLoopTokenAmount = 0;
+        saleInfo.nextVestingIndex = 0;
 
         soldToken = soldToken + loopTokenAmount;
 
@@ -169,26 +199,39 @@ contract Presale is AccessControl {
         emit TokenPurchased(msg.sender, loopTokenAmount);
     }
     
+    /*
+    This function claims all vested tranches of Loop tokens
+    */
     function claimToken() external executable checkAfterTime {
         SaleInfo storage saleInfo = presaleList[msg.sender];
-        require(saleInfo.loopTokenAmount > 0, "No claimToken amount");
+        require((saleInfo.loopTokenAmount - saleInfo.claimedLoopTokenAmount) > 0, "No claimToken amount");
+        require(block.timestamp >= vestingSchedule[saleInfo.nextVestingIndex].Date, "No tokens available for claim yet");
 
-        uint loopTokenAmount = saleInfo.loopTokenAmount;
-        saleInfo.stableTokenAmount = 0;
-        saleInfo.loopTokenAmount = 0;
-        uint balance = IERC20(loopAddress).balanceOf(address(this));
-        require(balance > 0, "Insufficient balance");
-        if (balance < loopTokenAmount) {
-            loopTokenAmount = balance;
+        uint256 claimAmount = 0; //Amount claimable now
+
+        //Claim all eligible vesting tranches
+        while(block.timestamp >= vestingSchedule[saleInfo.nextVestingIndex].Date) {
+            claimAmount += vestingSchedule[saleInfo.nextVestingIndex].Percentage / 10000 * saleInfo.loopTokenAmount;
+            saleInfo.nextVestingIndex++;
+
+            if(saleInfo.nextVestingIndex == vestingSchedule.length) {
+                break;
+            }
         }
-        IERC20(loopAddress).safeTransfer(msg.sender, loopTokenAmount);
-        emit TokenClaimed(msg.sender, loopTokenAmount);
+
+        uint balance = IERC20(loopAddress).balanceOf(address(this));
+        require(balance > 0 && claimAmount > balance, "Insufficient balance");
+
+        saleInfo.claimedLoopTokenAmount += claimAmount;
+
+        IERC20(loopAddress).safeTransfer(msg.sender, claimAmount);
+        emit TokenClaimed(msg.sender, claimAmount);
     }
 
     function withdrawAllToken(address _withdrawAddress, address[] calldata _stableTokens) external executable onlyRole(DEFAULT_ADMIN_ROLE) checkAfterTime {
-        //Withdraw all leftover LOOP tokens
-        uint loopTokenAmount = IERC20(loopAddress).balanceOf(address(this));
-        IERC20(loopAddress).safeTransfer(_withdrawAddress, loopTokenAmount);
+        //Withdraw all unsold LOOP tokens
+        uint unsoldLoopTokenAmount = IERC20(loopAddress).balanceOf(address(this)) - soldToken;
+        IERC20(loopAddress).safeTransfer(_withdrawAddress, unsoldLoopTokenAmount);
         
         //Withdraw all stablecoins
         for (uint i = 0; i < _stableTokens.length; i ++) {
@@ -202,5 +245,34 @@ contract Presale is AccessControl {
         require(loopAddress != _tokenAddress, "Cannot withdraw Loop tokens from presale using this function.");
         uint tokenAmount = IERC20(_tokenAddress).balanceOf(address(this));
         IERC20(_tokenAddress).safeTransfer(_withdrawAddress, tokenAmount);
+    }
+
+    function checkVestingPercentage(VestingTranche[] memory _vestingSchedule) pure private returns (bool vestingPercentageCorrect) {
+        vestingPercentageCorrect = false;
+
+        uint16 totalPercentage = 0;
+
+        for (uint i = 0; i < _vestingSchedule.length; i++)
+        {
+            totalPercentage += _vestingSchedule[i].Percentage;
+        }
+
+        if (totalPercentage == 10000) {
+            vestingPercentageCorrect = true;
+        }
+    }
+
+   function checkVestingScheduleOrdered(VestingTranche[] memory _vestingSchedule) pure private returns (bool vestingScheduleOrdered) {
+        vestingScheduleOrdered = true;
+
+        for (uint i = 0; i < _vestingSchedule.length - 1; i++)
+        {
+            if(_vestingSchedule[i].Date > _vestingSchedule[i+1].Date) {
+                vestingScheduleOrdered = false;
+                break;
+            }
+        }
+
+        return vestingScheduleOrdered;
     }
 }
