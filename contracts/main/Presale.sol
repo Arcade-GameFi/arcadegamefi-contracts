@@ -93,7 +93,7 @@ contract Presale is AccessControl {
             vestingSchedule.push(_vestingSchedule[i]);
         }
 
-        require(checkVestingPercentage(_vestingSchedule), "Vesting percentages don't add up to 100%");
+        require(checkVestingPercentage(_vestingSchedule), "Vesting percentages don't add up to 100%. Please make sure that values are in basis points");
         require(checkVestingScheduleOrdered(_vestingSchedule), "Vesting schedule is not ordered from older to newest");
 
         tokenPrice = _tokenPrice;
