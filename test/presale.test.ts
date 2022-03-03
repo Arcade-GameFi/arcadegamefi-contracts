@@ -28,6 +28,7 @@ describe('presale-test', () => {
   let busd: Token
   let usdt: Token
   let meme: Token
+
   const saleStart_20220204_11_00_00_GMT_Time = 1656251469 //2022-02-04 11:00:00 GMT
   const saleEnd_20220204_17_00_00_GMT_Time = 1656467469    //2022-02-04 17:00:00 GMT
   const claimStart = 1656468000 //Initial vesting date
@@ -95,7 +96,8 @@ describe('presale-test', () => {
     console.log('addr3-BUSD:', formatUnits(await busd.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.BUSD))
     console.log('addr3-USDT:', formatUnits(await usdt.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.USDT))
 
-    loopContract = (await TokenContractFactory.deploy('LOOP', 'LOOP', 18)) as LoopToken
+    loopContract = (await TokenContractFactory.deploy('LOOP', 'LOOP', TOKEN_DECIMAL.LOOP)) as Token
+
     await loopContract.deployed()
     console.log('LoopToken deployed')
     
@@ -229,10 +231,10 @@ describe('presale-test', () => {
         getBigNumber(300, TOKEN_DECIMAL.USDT))
         ).to.be.revertedWith('Exceeding presale token limit during round1 period')
     })
-
-    
+   
     it('round2 period - purchase tokens1 ', async () => {
       await advanceBlockTimeStamp(saleEnd_20220204_17_00_00_GMT_Time - round2Minutes * 60)
+
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await busd.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await usdt.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
@@ -251,6 +253,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr2).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
       console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
+
     
     it('round2 period - purchase tokens3 ', async () => {
       await usdc.connect(addr3).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
@@ -304,6 +307,7 @@ describe('presale-test', () => {
       console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
+
     it('Exceeding purchase token limit during FCFS period ', async () => {
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(1, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr1).buyToken(
@@ -319,6 +323,7 @@ describe('presale-test', () => {
     })
 
     it('FCFS period - purchase tokens3 ', async () => {
+
       await usdc.connect(addr3).approve(presaleContract.address, getBigNumber(3000, TOKEN_DECIMAL.USDC))
       await busd.connect(addr3).approve(presaleContract.address, getBigNumber(500, TOKEN_DECIMAL.BUSD))
       await usdt.connect(addr3).approve(presaleContract.address, getBigNumber(500, TOKEN_DECIMAL.USDT))
@@ -327,6 +332,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr3).buyToken(usdt.address, getBigNumber(500, TOKEN_DECIMAL.USDT))
 
       console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+
     })
 
     it('All Loop tokens are sold out', async () => {
