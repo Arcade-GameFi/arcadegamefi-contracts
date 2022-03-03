@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract LoopToken is ERC20, ERC20Burnable, AccessControl {
     using SafeERC20 for ERC20;
-    uint8 public _decimals;
     uint256 public _cap;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -43,8 +42,13 @@ contract LoopToken is ERC20, ERC20Burnable, AccessControl {
     }
 
     constructor() ERC20("Loop", "LOOP") {
-        _cap = 1000000000;
-        _mint(msg.sender, _cap * 10 ** decimals());
+        _cap = 1000000000 * 10 ** decimals();
+        
+        _excludedFromAntiWhale[msg.sender] = true;
+        _excludedFromAntiWhale[address(0)] = true;
+        _excludedFromAntiWhale[address(this)] = true;
+        
+        _mint(msg.sender, _cap);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
     }
