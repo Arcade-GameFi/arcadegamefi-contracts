@@ -7,7 +7,8 @@ import { getBigNumber } from '../test/utils'
 
 async function main() {
   const TokenFactory = await ethers.getContractFactory("Token");
-  const tokenContract = await TokenFactory.deploy('LOOP', 'LOOP', 18);
+  const LoopTokenFactory = await ethers.getContractFactory("LoopToken")
+  const tokenContract = await LoopTokenFactory.deploy();
   console.log('LoopContract address:', tokenContract.address);
   console.log('LoopContract hash:', tokenContract.deployTransaction.hash);
   await tokenContract.deployed();

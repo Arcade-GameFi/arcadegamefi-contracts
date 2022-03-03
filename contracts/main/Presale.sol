@@ -33,8 +33,8 @@ contract Presale is AccessControl {
     }
 
     struct VestingTranche {
-        uint256 Date; //UNIX Timestamp of Vesting
         uint16 Percentage; //Percentage Vested in Basis points 10,000 = 100%
+        uint256 Date; //UNIX Timestamp of Vesting
     }
 
     SaleRules public saleRules;
@@ -98,6 +98,7 @@ contract Presale is AccessControl {
             acceptTokens[_acceptTokens[i]] = true;
         }
         presaleTokenAmount = _presaleTokenAmount;
+        soldToken = 0;
         isPause = false;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -192,7 +193,7 @@ contract Presale is AccessControl {
         saleInfo.claimedLoopTokenAmount = 0;
         saleInfo.nextVestingIndex = 0;
 
-        soldToken = soldToken + loopTokenAmount;
+        soldToken += loopTokenAmount;
 
         IERC20(_stableTokenAddress).safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -220,7 +221,7 @@ contract Presale is AccessControl {
         }
 
         uint balance = IERC20(loopAddress).balanceOf(address(this));
-        require(balance > 0 && claimAmount > balance, "Insufficient balance");
+        require(balance > 0 && claimAmount <= balance, "Insufficient balance");
 
         saleInfo.claimedLoopTokenAmount += claimAmount;
 
@@ -229,8 +230,8 @@ contract Presale is AccessControl {
     }
 
     function withdrawAllToken(address _withdrawAddress, address[] calldata _stableTokens) external executable onlyRole(DEFAULT_ADMIN_ROLE) checkAfterTime {
-        //Withdraw all unsold LOOP tokens
-        uint unsoldLoopTokenAmount = IERC20(loopAddress).balanceOf(address(this)) - soldToken;
+        Withdraw all unsold LOOP tokens
+        uint256 unsoldLoopTokenAmount = IERC20(loopAddress).balanceOf(address(this)) - soldToken;
         IERC20(loopAddress).safeTransfer(_withdrawAddress, unsoldLoopTokenAmount);
         
         //Withdraw all stablecoins

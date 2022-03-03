@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { parseUnits, formatUnits } from "ethers/lib/utils";
-import { Token, Presale } from "../typechain-types"
+import { LoopToken, Presale, Token } from "../typechain-types"
 
 import {
   getBigNumber,
@@ -16,7 +16,7 @@ import {
 import { Contract, Signer } from 'ethers';
 
 describe('presale-test', () => {
-  let loopContract: Token
+  let loopContract: LoopToken
   let presaleContract: Presale
   let owner: Signer
   let addr1: Signer
@@ -27,8 +27,8 @@ describe('presale-test', () => {
   let busd: Token
   let usdt: Token
   let meme: Token
-  const saleStart_20220204_11_00_00_GMT_Time = 1646079668 //2022-02-04 11:00:00 GMT
-  const saleEnd_20220204_17_00_00_GMT_Time = 1646101268    //2022-02-04 17:00:00 GMT
+  const saleStart_20220204_11_00_00_GMT_Time = 1656251469 //2022-02-04 11:00:00 GMT
+  const saleEnd_20220204_17_00_00_GMT_Time = 1656467469    //2022-02-04 17:00:00 GMT
   const phase2Minutes = 120
   const fcfsMinutes = 20
   const tokenPrice = '0.01'
@@ -90,25 +90,31 @@ describe('presale-test', () => {
     console.log('addr3-BUSD:', formatUnits(await busd.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.BUSD))
     console.log('addr3-USDT:', formatUnits(await usdt.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.USDT))
 
-    loopContract = (await TokenContractFactory.deploy('LOOP', 'LOOP', TOKEN_DECIMAL.LOOP)) as Token
+    loopContract = (await TokenContractFactory.deploy('LOOP', 'LOOP', 18)) as LoopToken
     await loopContract.deployed()
     console.log('LoopToken deployed')
+    
     const PresaleContractFactory = await ethers.getContractFactory('Presale')
     presaleContract = (await PresaleContractFactory.deploy(
       loopContract.address, 
       saleStart_20220204_11_00_00_GMT_Time, 
       saleEnd_20220204_17_00_00_GMT_Time, 
-      phase2Minutes,
-      fcfsMinutes, 
-      getBigNumber(tokenPrice), 
+      getBigNumber(tokenPrice),
       getBigNumber(allowedTokenAmount),
+      [
+        2,
+        5,
+        120,
+        20
+      ],
+      [
+        [10000, 1646179668]
+      ],
       [
         usdc.address,
         busd.address,
         usdt.address
       ],
-      round2Multiplier,
-      fcfsMultiplier,
       getBigNumber(presaleTokenAmount)
       )) as Presale
     await presaleContract.deployed()
