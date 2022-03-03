@@ -13,7 +13,7 @@ import {
   getSnapShot,
   revertTime
 } from './utils'
-import { Contract, Signer } from 'ethers';
+import { BigNumber, Contract, Signer } from 'ethers';
 
 describe('presale-test', () => {
   let loopContract: LoopToken
@@ -154,6 +154,17 @@ describe('presale-test', () => {
     })
     it('Can remove whitelist if authorized', async () => {
       await expect(presaleContract.removeWhitelist(await owner.getAddress())).to.be.not.reverted
+    })
+
+    it('Can not add whitelists if authorized', async () => {
+      await expect(presaleContract.connect(addr1).addWhitelists([await addr2.getAddress(), await addr1.getAddress()])).to.be.reverted
+    })
+
+    it('Can add whitelists if authorized', async () => {
+      await expect(presaleContract.addWhitelists([await owner.getAddress(), await addr1.getAddress()])).to.be.not.reverted
+    })
+    it('Can remove whitelists if authorized', async () => {
+      await expect(presaleContract.removeWhitelists([await owner.getAddress(), await addr1.getAddress()])).to.be.not.reverted
     })
   })
 
@@ -481,6 +492,43 @@ describe('presale-test', () => {
       )
       expect(await meme.balanceOf(await addr1.getAddress())).to.equal(getBigNumber(5000))
       console.log('MEME in addr1:', formatUnits(await meme.balanceOf(await addr1.getAddress())))
+    })
+  })
+
+  describe('Buy History', async () => {
+    it('Get Buy History Not Authorized', async () => {
+      await expect(presaleContract.connect(addr1).getBuyHistory()).to.be.revertedWith('AccessControl')
+    })
+
+    it('Print out Buy History', async () => {
+      const buyHistory = await presaleContract.getBuyHistory()
+      var tokenDecimals = 18;
+      var buyTime;
+
+      console.log("Buyer Address" + "\t" + "Buy Time" + "\t" + "Stablecoin Address" + "\t" + "USD VALUE")
+
+      for (let bH of buyHistory) {
+        switch(bH.stablecoinAddress) {
+          case usdc.address: {
+            tokenDecimals = TOKEN_DECIMAL.USDC
+            break;
+          }
+
+          case usdt.address: {
+            tokenDecimals = TOKEN_DECIMAL.USDT
+            break;
+          }
+
+          case busd.address: {
+            tokenDecimals = TOKEN_DECIMAL.BUSD
+            break;
+          }
+        }
+        buyTime = new Date(Number(bH.buyTime) * 1000)
+
+        console.log(bH.buyerAddress + "\t" + buyTime + "\t" + bH.stablecoinAddress + "\t" + formatUnits(bH.stableTokenAmount, tokenDecimals))
+      }
+
     })
   })
 })
