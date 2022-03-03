@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Presale is AccessControl {
     using SafeERC20 for IERC20;
@@ -19,6 +20,15 @@ contract Presale is AccessControl {
     mapping(address => bool) public whitelists;
     mapping(address => SaleInfo) public presaleList;
     mapping(address => bool) public acceptTokens;
+
+    struct BuyHistory {
+        address buyerAddress;
+        uint256 loopTokenAmount;
+        address stablecoinAddress;
+        uint256 buyTime;
+    }
+
+    BuyHistory[] private buyHistory; // Buying history
 
     bool private isPause;
     uint8 public constant maxDecimals = 18;
@@ -146,6 +156,18 @@ contract Presale is AccessControl {
         whitelists[_whiteAddress] = false;
     }
 
+    function addWhitelists(address[] calldata _whiteAddresses) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint i = 0; i < _whiteAddresses.length; i++) {
+            whitelists[_whiteAddresses[i]] = true;
+        }
+    }
+
+    function removeWhitelists(address[] calldata _whiteAddresses) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint i = 0; i < _whiteAddresses.length; i++) {
+            whitelists[_whiteAddresses[i]] = false;
+        }
+    }
+
 	function addAcceptTokens(address _acceptTokenAddress) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
         acceptTokens[_acceptTokenAddress] = true;
     }
@@ -188,14 +210,23 @@ contract Presale is AccessControl {
                 "Exceeding presale token limit during round2 period");
         }
 
-        saleInfo.stableTokenAmount = saleInfo.stableTokenAmount + tokenAmount;
-        saleInfo.loopTokenAmount = saleInfo.loopTokenAmount + loopTokenAmount;
+        saleInfo.stableTokenAmount += tokenAmount;
+        saleInfo.loopTokenAmount += loopTokenAmount;
         saleInfo.claimedLoopTokenAmount = 0;
         saleInfo.nextVestingIndex = 0;
 
         soldToken += loopTokenAmount;
 
         IERC20(_stableTokenAddress).safeTransferFrom(msg.sender, address(this), _amount);
+        
+        //Add Buy History
+        BuyHistory memory tempHistory;
+        tempHistory.buyerAddress = msg.sender;
+        tempHistory.loopTokenAmount = _amount;
+        tempHistory.stablecoinAddress = _stableTokenAddress;
+        tempHistory.buyTime = block.timestamp;
+
+        addBuyHistory(tempHistory);
 
         emit TokenPurchased(msg.sender, loopTokenAmount);
     }
@@ -212,7 +243,8 @@ contract Presale is AccessControl {
 
         //Claim all eligible vesting tranches
         while(block.timestamp >= vestingSchedule[saleInfo.nextVestingIndex].Date) {
-            claimAmount += vestingSchedule[saleInfo.nextVestingIndex].Percentage / 10000 * saleInfo.loopTokenAmount;
+            claimAmount += (vestingSchedule[saleInfo.nextVestingIndex].Percentage * saleInfo.loopTokenAmount) / 10000;
+
             saleInfo.nextVestingIndex++;
 
             if(saleInfo.nextVestingIndex == vestingSchedule.length) {
@@ -221,7 +253,7 @@ contract Presale is AccessControl {
         }
 
         uint balance = IERC20(loopAddress).balanceOf(address(this));
-        require(balance > 0 && claimAmount <= balance, "Insufficient balance");
+        require(balance > 0 && claimAmount <= balance, string(abi.encodePacked(Strings.toString(balance), abi.encodePacked("Insufficient balance for claim amount: ", Strings.toString(claimAmount)))));
 
         saleInfo.claimedLoopTokenAmount += claimAmount;
 
@@ -230,9 +262,12 @@ contract Presale is AccessControl {
     }
 
     function withdrawAllToken(address _withdrawAddress, address[] calldata _stableTokens) external executable onlyRole(DEFAULT_ADMIN_ROLE) checkAfterTime {
-        Withdraw all unsold LOOP tokens
+        //Withdraw all unsold LOOP tokens
         uint256 unsoldLoopTokenAmount = IERC20(loopAddress).balanceOf(address(this)) - soldToken;
-        IERC20(loopAddress).safeTransfer(_withdrawAddress, unsoldLoopTokenAmount);
+
+        if(unsoldLoopTokenAmount > 0) {
+            IERC20(loopAddress).safeTransfer(_withdrawAddress, unsoldLoopTokenAmount);
+        }
         
         //Withdraw all stablecoins
         for (uint i = 0; i < _stableTokens.length; i ++) {
@@ -275,5 +310,9 @@ contract Presale is AccessControl {
         }
 
         return vestingScheduleOrdered;
+    }
+
+    function addBuyHistory(BuyHistory memory _buyHistory) private {
+        buyHistory.push(_buyHistory);
     }
 }
