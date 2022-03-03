@@ -23,8 +23,8 @@ contract Presale is AccessControl {
 
     struct BuyHistory {
         address buyerAddress;
-        uint256 loopTokenAmount;
         address stablecoinAddress;
+        uint256 stableTokenAmount;
         uint256 buyTime;
     }
 
@@ -82,8 +82,6 @@ contract Presale is AccessControl {
         require(_saleRules.round2Multiplier >= 1);
         require(_saleRules.fcfsMultiplier >= 1);
         require(_vestingSchedule.length > 0);
-        
-
 
         saleStartTime = _saleStartTime;
         saleEndTime = _saleEndTime;
@@ -222,8 +220,8 @@ contract Presale is AccessControl {
         //Add Buy History
         BuyHistory memory tempHistory;
         tempHistory.buyerAddress = msg.sender;
-        tempHistory.loopTokenAmount = _amount;
         tempHistory.stablecoinAddress = _stableTokenAddress;
+        tempHistory.stableTokenAmount = _amount;
         tempHistory.buyTime = block.timestamp;
 
         addBuyHistory(tempHistory);
@@ -314,5 +312,9 @@ contract Presale is AccessControl {
 
     function addBuyHistory(BuyHistory memory _buyHistory) private {
         buyHistory.push(_buyHistory);
+    }
+
+    function getBuyHistory() view external onlyRole(DEFAULT_ADMIN_ROLE) returns (BuyHistory[] memory bHistory) {
+        return buyHistory;
     }
 }
