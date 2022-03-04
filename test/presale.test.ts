@@ -37,10 +37,13 @@ describe('presale-test', () => {
   const vestPercentage2 = 5000 //50% vest in basis points
   const round2Minutes = 120
   const fcfsMinutes = 20
-  const tokenPrice = '0.01'
-  const allowedTokenAmount = '500'
   const round2Multiplier = 2
   const fcfsMultiplier = 10
+  const round2RequireWhitelist = true
+  const fcfsRequireWhitelist = true
+
+  const allowedTokenAmount = '500'
+  const tokenPrice = '0.01'
   // const presaleTokenAmount = '60000000'
   const presaleTokenAmount = '1500000'
 
@@ -112,7 +115,9 @@ describe('presale-test', () => {
         round2Multiplier,
         fcfsMultiplier,
         round2Minutes,
-        fcfsMinutes
+        fcfsMinutes,
+        round2RequireWhitelist,
+        fcfsRequireWhitelist
       ],
       [
         [vestPercentage1, claimStart],
@@ -140,13 +145,13 @@ describe('presale-test', () => {
   })
 
   describe('Manage pause status and whitelist', async () => {
-    it('Can not set pause if unauthorized', async () => {
+    it('Cannot set pause if unauthorized', async () => {
       await expect(presaleContract.connect(addr1).stopContract(true)).to.be.reverted
     })
     it('Can set pause if authorized', async () => {
       await expect(presaleContract.stopContract(false)).to.be.not.reverted
     })
-    it('Can not add whitelist if authorized', async () => {
+    it('Cannot add whitelist if not authorized', async () => {
       await expect(presaleContract.connect(addr1).addWhitelist(await addr1.getAddress())).to.be.reverted
     })
     it('Can add whitelist if authorized', async () => {
@@ -156,7 +161,7 @@ describe('presale-test', () => {
       await expect(presaleContract.removeWhitelist(await owner.getAddress())).to.be.not.reverted
     })
 
-    it('Can not add whitelists if authorized', async () => {
+    it('Cannot add whitelists if not authorized', async () => {
       await expect(presaleContract.connect(addr1).addWhitelists([await addr2.getAddress(), await addr1.getAddress()])).to.be.reverted
     })
 
@@ -168,8 +173,43 @@ describe('presale-test', () => {
     })
   })
 
+/* 
+  describe('Purchase Token Whitelist Checks', async () => {
+    let snapShotId:number
+
+    before(async() => {
+      snapShotId = await getSnapShot()      
+    })
+
+    after(async() => {
+      await revertTime(snapShotId)
+    })
+
+    it('Token purchases during round 2 cannot be made if not whitelist address and round2RequireWhitelist flag is true', async () => {
+      await advanceBlockTimeStamp(saleEnd_20220204_17_00_00_GMT_Time - round2Minutes * 60)
+      await presaleContract.setRound2RequireWhitelist(true)
+      await expect(presaleContract.buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.revertedWith('Not whitelist address')
+    })
+
+    it('Token purchases during round 2 can be made if whitelist address and round2RequireWhitelist flag is true', async () => {
+      await presaleContract.setRound2RequireWhitelist(true)
+      await expect(presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.not.reverted
+    })
+
+    it('Token purchases during round 2 can be made if whitelist address and round2RequireWhitelist flag is false', async () => {
+      await presaleContract.setRound2RequireWhitelist(false)
+      await expect(presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.not.reverted
+    })
+
+    it('Token purchases during round 2 can be made if not whitelist address and round2RequireWhitelist flag is false', async () => {
+      await presaleContract.setRound2RequireWhitelist(false)
+      await expect(presaleContract.buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.not.reverted
+    })
+
+  }) */
+
   describe('Purchase Token', async () => {
-    it('Can not purchase token if contract is paused ', async () => {
+    it('Cannot purchase token if contract is paused ', async () => {
       await presaleContract.stopContract(true)
       await expect(presaleContract.buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.revertedWith('Contract is paused')
     })
@@ -179,12 +219,12 @@ describe('presale-test', () => {
       await expect(presaleContract.buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.revertedWith('Out of presale period')
     })
     
-    it('Token purchases can not be made if not whitelist address ', async () => {
+    it('Token purchases during round 1 cannot be made if not whitelist address ', async () => {
       await advanceBlockTimeStamp(saleStart_20220204_11_00_00_GMT_Time)
       await expect(presaleContract.buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.revertedWith('Not whitelist address')
     })
 
-    it('Token purchases can not be made if not stableToken address ', async () => {
+    it('Token purchases can not be made if not stableToken address', async () => {
       await presaleContract.addWhitelist(await owner.getAddress())
       await presaleContract.addWhitelist(await addr1.getAddress())
       await presaleContract.addWhitelist(await addr2.getAddress())
@@ -468,14 +508,14 @@ describe('presale-test', () => {
       )).to.be.revertedWith('AccessControl')
     })
 
-    it('Can not withdraw stable tokens', async () => {
+    it('Cannot withdraw stable tokens', async () => {
       await expect(presaleContract.giveBackToken(
         await addr1.getAddress(),
         usdc.address
       )).to.be.revertedWith('Cannot withdraw pre-sale swap stablecoin tokens from presale using this function.')
     })
 
-    it('Can not withdraw loop tokens', async () => {
+    it('Cannot withdraw loop tokens', async () => {
       await expect(presaleContract.giveBackToken(
         await addr1.getAddress(),
         loopContract.address
