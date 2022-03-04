@@ -40,6 +40,8 @@ contract Presale is AccessControl {
         uint256 fcfsMultiplier;
         uint256 round2Minutes;
         uint256 fcfsMinutes;
+        bool round2RequireWhitelist;
+        bool fcfsRequireWhitelist;
     }
 
     struct VestingTranche {
@@ -87,6 +89,10 @@ contract Presale is AccessControl {
         saleEndTime = _saleEndTime;
         saleRules.round2Minutes = _saleRules.round2Minutes;
         saleRules.fcfsMinutes = _saleRules.fcfsMinutes;
+        saleRules.round2Multiplier = _saleRules.round2Multiplier;
+        saleRules.fcfsMultiplier = _saleRules.fcfsMultiplier;
+        saleRules.fcfsRequireWhitelist =_saleRules.fcfsRequireWhitelist;
+        saleRules.fcfsRequireWhitelist =_saleRules.fcfsRequireWhitelist;
 
         //Assign vesting vesting schedule
         for(uint i = 0; i < _vestingSchedule.length; i++) {
@@ -98,8 +104,6 @@ contract Presale is AccessControl {
 
         tokenPrice = _tokenPrice;
         allowedTokenAmount = _allowedTokenAmount;
-        saleRules.round2Multiplier = _saleRules.round2Multiplier;
-        saleRules.fcfsMultiplier = _saleRules.fcfsMultiplier;
         
         loopAddress = _loopAddress;
         for (uint i = 0; i < _acceptTokens.length; i ++) {
@@ -133,6 +137,37 @@ contract Presale is AccessControl {
     function setEndTime(uint256 _saleEndTime) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
         saleEndTime = _saleEndTime;
     }
+
+    function setSaleRules(SaleRules calldata _saleRules) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules = _saleRules;
+    }
+
+    function setRound2Multiplier(uint256 _round2Multiplier) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules.round2Multiplier = _round2Multiplier;
+    }
+
+    function setFCFSMultiplier(uint256 _fcfsMultiplier) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules.fcfsMultiplier = _fcfsMultiplier;
+    }
+
+    function setRound2Minutes(uint256 _round2Minutes) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules.round2Minutes = _round2Minutes;
+    }
+
+    function setFCFSMinutes(uint256 _fcfsMinutes) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules.fcfsMinutes = _fcfsMinutes;
+    }
+
+    function setRound2RequireWhitelist(bool flag) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules.round2RequireWhitelist = flag;
+    }
+
+    function setFCFSRequireWhitelist(bool flag) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules.round2RequireWhitelist = flag;
+    
+    }
+
+
 
     function getSoldToken() public view returns(uint) {
         return soldToken;
@@ -177,10 +212,18 @@ contract Presale is AccessControl {
     function buyToken(address _stableTokenAddress, uint256 _amount) external executable checkEventTime {
         require(soldToken != presaleTokenAmount, "All Loop Tokens are sold out");
         
-        if(block.timestamp < saleEndTime - saleRules.fcfsMinutes * 1 minutes) {
-            require(whitelists[msg.sender] == true, "Not whitelist address"); //Enforce Whitelist before FCFS round
+        //Whitelist enforcement
+        if(block.timestamp < saleEndTime - saleRules.round2Minutes * 1 minutes) { //Round 1
+            require(whitelists[msg.sender] == true, "Not whitelist address"); //Enforce Whitelist
         }
-        
+        else if (block.timestamp > saleEndTime - saleRules.round2Minutes * 1 minutes && block.timestamp < saleEndTime - saleRules.fcfsMinutes * 1 minutes && saleRules.round2RequireWhitelist) {
+            require(whitelists[msg.sender] == true, "Not whitelist address");
+        }
+        else if (saleRules.fcfsRequireWhitelist) {
+            require(whitelists[msg.sender] == true, "Not whitelist address");
+        }
+
+        //End Whitelist enforcement
 
         require(acceptTokens[_stableTokenAddress] == true, "Not stableToken address");
 
@@ -308,6 +351,20 @@ contract Presale is AccessControl {
         }
 
         return vestingScheduleOrdered;
+    }
+
+    /* 
+    Allow Admin to modify vesting schedule. Checks to be made that there are no clashes
+    */
+    function modifyVestingSchedule(uint8 _vestingIndex, uint16 _vestingPercentage, uint256 _vestingDate) onlyRole(DEFAULT_ADMIN_ROLE) external {
+        //Set new vesting parameters
+        vestingSchedule[_vestingIndex].Percentage = _vestingPercentage;
+        vestingSchedule[_vestingIndex].Date = _vestingDate;
+        
+        //Basic checks on validity of vesting parameters
+        require(checkVestingPercentage(vestingSchedule), "Vesting percentages don't add up to 100%. Please make sure that values are in basis points");
+        require(checkVestingScheduleOrdered(vestingSchedule), "Vesting schedule is not ordered from older to newest");
+        
     }
 
     function addBuyHistory(BuyHistory memory _buyHistory) private {
