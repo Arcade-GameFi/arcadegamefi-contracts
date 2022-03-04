@@ -158,12 +158,12 @@ contract Presale is AccessControl {
         saleRules.fcfsMinutes = _fcfsMinutes;
     }
 
-    function setRound2RequireWhitelist(bool flag) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
-        saleRules.round2RequireWhitelist = flag;
+    function setRound2RequireWhitelist(bool _flag) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules.round2RequireWhitelist = _flag;
     }
 
-    function setFCFSRequireWhitelist(bool flag) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
-        saleRules.round2RequireWhitelist = flag;
+    function setFCFSRequireWhitelist(bool _flag) external executable onlyRole(DEFAULT_ADMIN_ROLE) {
+        saleRules.fcfsRequireWhitelist = _flag;
     
     }
 
@@ -216,10 +216,10 @@ contract Presale is AccessControl {
         if(block.timestamp < saleEndTime - saleRules.round2Minutes * 1 minutes) { //Round 1
             require(whitelists[msg.sender] == true, "Not whitelist address"); //Enforce Whitelist
         }
-        else if (block.timestamp > saleEndTime - saleRules.round2Minutes * 1 minutes && block.timestamp < saleEndTime - saleRules.fcfsMinutes * 1 minutes && saleRules.round2RequireWhitelist) {
+        else if ((block.timestamp >= saleEndTime - saleRules.round2Minutes * 1 minutes) && (block.timestamp < saleEndTime - saleRules.fcfsMinutes * 1 minutes) && saleRules.round2RequireWhitelist) {
             require(whitelists[msg.sender] == true, "Not whitelist address");
         }
-        else if (saleRules.fcfsRequireWhitelist) {
+        else if ((block.timestamp >= saleEndTime - saleRules.fcfsMinutes * 1 minutes) && saleRules.fcfsRequireWhitelist) {
             require(whitelists[msg.sender] == true, "Not whitelist address");
         }
 
@@ -240,15 +240,16 @@ contract Presale is AccessControl {
 
         require(soldToken + loopTokenAmount <= presaleTokenAmount, "Cannot buy more LOOP tokens than amount up for presale");
 
-        if (block.timestamp >= saleEndTime - saleRules.fcfsMinutes * 1 minutes) {
-            require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * saleRules.fcfsMultiplier, 
-                "Exceeding presale token limit during FCFS period");
-        } else if (block.timestamp < saleEndTime - saleRules.round2Minutes * 1 minutes) {
+
+        if (block.timestamp < saleEndTime - saleRules.round2Minutes * 1 minutes) {
             require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount, 
                 "Exceeding presale token limit during round1 period");
-        } else if (block.timestamp >= saleEndTime - saleRules.round2Minutes * 1 minutes && block.timestamp < saleEndTime - saleRules.fcfsMinutes * 1 minutes) {
+        } else if ((block.timestamp >= saleEndTime - saleRules.round2Minutes * 1 minutes) && (block.timestamp < saleEndTime - saleRules.fcfsMinutes * 1 minutes)) {
             require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * saleRules.round2Multiplier, 
                 "Exceeding presale token limit during round2 period");
+        } else if (block.timestamp >= saleEndTime - saleRules.fcfsMinutes * 1 minutes) {
+            require(saleInfo.stableTokenAmount + tokenAmount <= allowedTokenAmount * saleRules.fcfsMultiplier, 
+                "Exceeding presale token limit during FCFS period");
         }
 
         saleInfo.stableTokenAmount += tokenAmount;
