@@ -357,14 +357,48 @@ contract Presale is AccessControl {
     /* 
     Allow Admin to modify vesting schedule. Checks to be made that there are no clashes
     */
-    function modifyVestingSchedule(uint8 _vestingIndex, uint16 _vestingPercentage, uint256 _vestingDate) onlyRole(DEFAULT_ADMIN_ROLE) external {
+    function modifyVestingSchedule(VestingTranche[] memory _newVestingSchedule) onlyRole(DEFAULT_ADMIN_ROLE) external {
+        //Basic pre-checks on new vesting schedule
+        require(checkVestingPercentage(_newVestingSchedule), "Vesting percentages don't add up to 100%. Please make sure that values are in basis points");
+        require(checkVestingScheduleOrdered(_newVestingSchedule), "Vesting schedule is not ordered from older to newest");
+        
+        
+        //Check length of new vesting schedule vs old vesting schedule
+        VestingTranche[] memory oldVestingSchedule;
+        VestingTranche memory tranche;
+        
+        oldVestingSchedule = vestingSchedule; //Copy
+
+
+        delete vestingSchedule; //Clear the vesting schedule
+
         //Set new vesting parameters
-        vestingSchedule[_vestingIndex].Percentage = _vestingPercentage;
-        vestingSchedule[_vestingIndex].Date = _vestingDate;
+
+        for (uint i = 0; i < _newVestingSchedule.length; i++) {
+
+            if(i < oldVestingSchedule.length) { //Prevent addressing of invalid entries
+                if(oldVestingSchedule[i].Date < block.timestamp) {
+                    //Copy old vesting values if tranches are in the past
+                    tranche.Date = oldVestingSchedule[i].Date;
+                    tranche.Percentage = oldVestingSchedule[i].Percentage;   
+                }
+                else {
+                    //Copy for anything where claims have not started
+                    tranche.Date = _newVestingSchedule[i].Date;
+                    tranche.Percentage = _newVestingSchedule[i].Percentage;
+                }
+            } 
+            else { //Anything longer than old vesting schedule, we just copy
+                tranche.Date = _newVestingSchedule[i].Date;
+                tranche.Percentage = _newVestingSchedule[i].Percentage;
+            }
+            
+            vestingSchedule.push(tranche);
+        }
         
         //Basic checks on validity of vesting parameters
-        require(checkVestingPercentage(vestingSchedule), "Vesting percentages don't add up to 100%. Please make sure that values are in basis points");
-        require(checkVestingScheduleOrdered(vestingSchedule), "Vesting schedule is not ordered from older to newest");
+        require(checkVestingPercentage(vestingSchedule), "User tried to modify earlier tranches of vesting schedule that created inconsistencies");
+        require(checkVestingScheduleOrdered(vestingSchedule), "User tried to modify earlier tranches of vesting schedule that created inconsistencies");
         
     }
 
