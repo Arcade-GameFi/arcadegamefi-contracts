@@ -46,6 +46,7 @@ describe('presale-test', () => {
   const saleEnd = 1677920400    //2023-03-04 17:00:00 GMT
   const claimStart = saleEnd + 60 * 60 //Initial vesting date
   const claimStart2 =  claimStart + 30 * 24 * 60 * 60 //Initial vesting date + 30 days
+  const claimStart3 =  claimStart + 60 * 24 * 60 * 60 //Initial vesting date + 60 days
   const round2Start = saleEnd - round2Minutes * 60
   const fcfsStart = saleEnd - fcfsMinutes * 60
 
@@ -68,7 +69,7 @@ describe('presale-test', () => {
     busd = (await TokenContractFactory.deploy(TOKEN_NAME.BUSD, TOKEN_NAME.BUSD, TOKEN_DECIMAL.BUSD)) as Token
     usdt = (await TokenContractFactory.deploy(TOKEN_NAME.USDT, TOKEN_NAME.USDT, TOKEN_DECIMAL.USDT)) as Token
     meme = (await TokenContractFactory.deploy('MEME', 'MEME', 18)) as Token
-    console.log('StableTokens deployed')
+    console.log('    StableTokens deployed')
     await usdc.approve(await addr1.getAddress(), getBigNumber(50000, TOKEN_DECIMAL.USDC))
     await usdc.approve(await addr2.getAddress(), getBigNumber(50000, TOKEN_DECIMAL.USDC))
     await usdc.approve(await addr3.getAddress(), getBigNumber(50000, TOKEN_DECIMAL.USDC))
@@ -105,34 +106,34 @@ describe('presale-test', () => {
     await usdt.transfer(await addr4.getAddress(), getBigNumber(50000, TOKEN_DECIMAL.USDT))
     await usdt.transfer(await addr5.getAddress(), getBigNumber(50000, TOKEN_DECIMAL.USDT))
 
-    console.log('owner-USDC:', formatUnits(await usdc.balanceOf(await owner.getAddress()), TOKEN_DECIMAL.USDC))
-    console.log('owner-BUSD:', formatUnits(await busd.balanceOf(await owner.getAddress()), TOKEN_DECIMAL.BUSD))
-    console.log('owner-USDT:', formatUnits(await usdt.balanceOf(await owner.getAddress()), TOKEN_DECIMAL.USDT))
+    console.log('\towner-USDC:', formatUnits(await usdc.balanceOf(await owner.getAddress()), TOKEN_DECIMAL.USDC))
+    console.log('\towner-BUSD:', formatUnits(await busd.balanceOf(await owner.getAddress()), TOKEN_DECIMAL.BUSD))
+    console.log('\towner-USDT:', formatUnits(await usdt.balanceOf(await owner.getAddress()), TOKEN_DECIMAL.USDT))
 
-    console.log('addr1-USDC:', formatUnits(await usdc.balanceOf(await addr1.getAddress()), TOKEN_DECIMAL.USDC))
-    console.log('addr1-BUSD:', formatUnits(await busd.balanceOf(await addr1.getAddress()), TOKEN_DECIMAL.BUSD))
-    console.log('addr1-USDT:', formatUnits(await usdt.balanceOf(await addr1.getAddress()), TOKEN_DECIMAL.USDT))
+    console.log('\taddr1-USDC:', formatUnits(await usdc.balanceOf(await addr1.getAddress()), TOKEN_DECIMAL.USDC))
+    console.log('\taddr1-BUSD:', formatUnits(await busd.balanceOf(await addr1.getAddress()), TOKEN_DECIMAL.BUSD))
+    console.log('\taddr1-USDT:', formatUnits(await usdt.balanceOf(await addr1.getAddress()), TOKEN_DECIMAL.USDT))
 
-    console.log('addr2-USDC:', formatUnits(await usdc.balanceOf(await addr2.getAddress()), TOKEN_DECIMAL.USDC))
-    console.log('addr2-BUSD:', formatUnits(await busd.balanceOf(await addr2.getAddress()), TOKEN_DECIMAL.BUSD))
-    console.log('addr2-USDT:', formatUnits(await usdt.balanceOf(await addr2.getAddress()), TOKEN_DECIMAL.USDT))
+    console.log('\taddr2-USDC:', formatUnits(await usdc.balanceOf(await addr2.getAddress()), TOKEN_DECIMAL.USDC))
+    console.log('\taddr2-BUSD:', formatUnits(await busd.balanceOf(await addr2.getAddress()), TOKEN_DECIMAL.BUSD))
+    console.log('\taddr2-USDT:', formatUnits(await usdt.balanceOf(await addr2.getAddress()), TOKEN_DECIMAL.USDT))
 
-    console.log('addr3-USDC:', formatUnits(await usdc.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.USDC))
-    console.log('addr3-BUSD:', formatUnits(await busd.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.BUSD))
-    console.log('addr3-USDT:', formatUnits(await usdt.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.USDT))
+    console.log('\taddr3-USDC:', formatUnits(await usdc.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.USDC))
+    console.log('\taddr3-BUSD:', formatUnits(await busd.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.BUSD))
+    console.log('\taddr3-USDT:', formatUnits(await usdt.balanceOf(await addr3.getAddress()), TOKEN_DECIMAL.USDT))
 
-    console.log('addr4-USDC:', formatUnits(await usdc.balanceOf(await addr4.getAddress()), TOKEN_DECIMAL.USDC))
-    console.log('addr4-BUSD:', formatUnits(await busd.balanceOf(await addr4.getAddress()), TOKEN_DECIMAL.BUSD))
-    console.log('addr4-USDT:', formatUnits(await usdt.balanceOf(await addr4.getAddress()), TOKEN_DECIMAL.USDT))
+    console.log('\taddr4-USDC:', formatUnits(await usdc.balanceOf(await addr4.getAddress()), TOKEN_DECIMAL.USDC))
+    console.log('\taddr4-BUSD:', formatUnits(await busd.balanceOf(await addr4.getAddress()), TOKEN_DECIMAL.BUSD))
+    console.log('\taddr4-USDT:', formatUnits(await usdt.balanceOf(await addr4.getAddress()), TOKEN_DECIMAL.USDT))
 
-    console.log('addr5-USDC:', formatUnits(await usdc.balanceOf(await addr5.getAddress()), TOKEN_DECIMAL.USDC))
-    console.log('addr5-BUSD:', formatUnits(await busd.balanceOf(await addr5.getAddress()), TOKEN_DECIMAL.BUSD))
-    console.log('addr5-USDT:', formatUnits(await usdt.balanceOf(await addr5.getAddress()), TOKEN_DECIMAL.USDT))
+    console.log('\taddr5-USDC:', formatUnits(await usdc.balanceOf(await addr5.getAddress()), TOKEN_DECIMAL.USDC))
+    console.log('\taddr5-BUSD:', formatUnits(await busd.balanceOf(await addr5.getAddress()), TOKEN_DECIMAL.BUSD))
+    console.log('\taddr5-USDT:', formatUnits(await usdt.balanceOf(await addr5.getAddress()), TOKEN_DECIMAL.USDT))
 
     loopContract = (await TokenContractFactory.deploy('LOOP', 'LOOP', TOKEN_DECIMAL.LOOP)) as LoopToken
 
     await loopContract.deployed()
-    console.log('LoopToken deployed')
+    console.log('    LoopToken deployed')
     
     const PresaleContractFactory = await ethers.getContractFactory('Presale')
     presaleContract = (await PresaleContractFactory.deploy(
@@ -161,7 +162,7 @@ describe('presale-test', () => {
       getBigNumber(presaleTokenAmount)
       )) as Presale
     await presaleContract.deployed()
-    console.log('Presale Contract deployed')
+    console.log('    Presale Contract deployed')
   })
 
   describe('Deposit LoopToken into Presale Contract', async () => {
@@ -169,8 +170,8 @@ describe('presale-test', () => {
       await loopContract.approve(presaleContract.address, getBigNumber(presaleTokenAmount))
       await loopContract.transfer(presaleContract.address, getBigNumber(presaleTokenAmount))
       expect(await loopContract.balanceOf(presaleContract.address)).to.equal(getBigNumber(presaleTokenAmount))
-      console.log('LoopToken in presale contract:', formatUnits(await loopContract.balanceOf(presaleContract.address)))
-      console.log('LoopToken in LoopToken contract:', formatUnits(await loopContract.balanceOf(await owner.getAddress())))
+      console.log('\tLoopToken in presale contract:', formatUnits(await loopContract.balanceOf(presaleContract.address)))
+      console.log('\tLoopToken in LoopToken contract:', formatUnits(await loopContract.balanceOf(await owner.getAddress())))
     })
   })
 
@@ -280,6 +281,69 @@ describe('presale-test', () => {
 
   })
 
+  describe('Manage Vesting Schedule', async () => {
+    it('Cannot manage vesting schedule if not authorized', async () => {
+
+      await expect (presaleContract.connect(addr1).modifyVestingSchedule(
+        [
+          {Percentage: 2500, Date: claimStart},
+          {Percentage: 7500, Date: claimStart2}
+        ]
+        )).to.be.revertedWith('AccessControl')
+    })
+    
+    it('Can manage vesting schedule if authorized but invalid percentage', async () => {
+
+      await expect (presaleContract.modifyVestingSchedule(
+        [
+          {Percentage: 2000, Date: claimStart},
+          {Percentage: 5000, Date: claimStart2}
+        ]
+        )).to.be.revertedWith('Vesting percentages don\'t add up to 100%. Please make sure that values are in basis points')
+    })
+    
+    it('Can manage vesting schedule if authorized but invalid date', async () => {
+
+      await expect (presaleContract.modifyVestingSchedule(
+        [
+          {Percentage: 5000, Date: claimStart2},
+          {Percentage: 5000, Date: claimStart}
+        ]
+        )).to.be.revertedWith('Vesting schedule is not ordered from older to newest')
+    })
+
+    it('Can manage vesting schedule if authorized-1', async () => {
+
+      await expect (presaleContract.modifyVestingSchedule(
+        [
+          {Percentage: 2000, Date: claimStart},
+          {Percentage: 8000, Date: claimStart2}
+        ]
+        )).to.be.not.reverted
+    })
+
+    it('Can manage vesting schedule if authorized-2', async () => {
+
+      await expect (presaleContract.modifyVestingSchedule(
+        [
+          {Percentage: 5000, Date: claimStart},
+          {Percentage: 2000, Date: claimStart2},
+          {Percentage: 3000, Date: claimStart2}
+        ]
+        )).to.be.not.reverted
+    })
+
+    it('Can manage vesting schedule if authorized-2', async () => {
+
+      await expect (presaleContract.modifyVestingSchedule(
+        [
+          {Percentage: 5000, Date: claimStart},
+          {Percentage: 5000, Date: claimStart2}
+        ]
+        )).to.be.not.reverted
+    })
+  })
+
   describe('Purchase Token', async () => {
     it('Cannot purchase token if contract is paused ', async () => {
       await presaleContract.stopContract(true)
@@ -307,37 +371,37 @@ describe('presale-test', () => {
       await expect(presaleContract.buyToken(wrongTokenAddress, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.revertedWith('Not stableToken address')
     })
     
-    it('round1 - purchase tokens1', async () => {
+    it('Round 1 - purchase tokens1', async () => {
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await busd.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await usdt.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
       await presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr1).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr1).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Round 1 - Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
-    it('round1 - purchase tokens2 ', async () => {
+    it('Round 1 - purchase tokens2 ', async () => {
       await usdc.connect(addr2).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await busd.connect(addr2).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await usdt.connect(addr2).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
       await presaleContract.connect(addr2).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr2).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr2).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Round 1 - Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
     
-    it('round1 - purchase tokens3', async () => {
+    it('Round 1 - purchase tokens3', async () => {
       await usdc.connect(addr3).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await busd.connect(addr3).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await usdt.connect(addr3).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
       await presaleContract.connect(addr3).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr3).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr3).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Round 1 - Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
-    it('round1 period - Exceeding purchase token limit', async () => {
+    it('Round 1 period - Exceeding purchase token limit', async () => {
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr1).buyToken(
         usdc.address, 
@@ -357,26 +421,26 @@ describe('presale-test', () => {
         ).to.be.revertedWith('Exceeding presale token limit during round1 period')
     })
 
-    it('round 2 - Token purchases can be made if not whitelist address and round2RequireWhitelist flag is false', async () => {
+    it('Round 2 - Token purchases can be made if not whitelist address and round2RequireWhitelist flag is false', async () => {
       await advanceBlockTimeStamp(round2Start)
 
       await presaleContract.setRound2RequireWhitelist(false)
 
       await usdc.connect(addr5).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr5).buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.not.reverted
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
-    it('round 2 - Token purchases can be made if whitelist address and round2RequireWhitelist flag is false', async () => {      
+    it('Round 2 - Token purchases can be made if whitelist address and round2RequireWhitelist flag is false', async () => {      
 
       await presaleContract.setRound2RequireWhitelist(false)
       
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.not.reverted
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
-    it('round 2 - Token purchases cannot be made if not whitelist address and round2RequireWhitelist flag is true', async () => {
+    it('Round 2 - Token purchases cannot be made if not whitelist address and round2RequireWhitelist flag is true', async () => {
       
       await presaleContract.setRound2RequireWhitelist(true)
 
@@ -385,45 +449,45 @@ describe('presale-test', () => {
       
     })
 
-    it('round 2 - Token purchases can be made if whitelist address and round2RequireWhitelist flag is true', async () => {
+    it('Round 2 - Token purchases can be made if whitelist address and round2RequireWhitelist flag is true', async () => {
 
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.not.reverted
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
-    it('round2 - purchase tokens1', async () => {
+    it('Round2 - purchase tokens1', async () => {
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDC))
       await busd.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await usdt.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
       await presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr1).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr1).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
-    it('round2 - purchase tokens2', async () => {
+    it('Round2 - purchase tokens2', async () => {
       await usdc.connect(addr2).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await busd.connect(addr2).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await usdt.connect(addr2).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
       await presaleContract.connect(addr2).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr2).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr2).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
     
-    it('round2 - purchase tokens3', async () => {
+    it('Round2 - purchase tokens3', async () => {
       await usdc.connect(addr3).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await busd.connect(addr3).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await usdt.connect(addr3).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
       await presaleContract.connect(addr3).buyToken(usdc.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr3).buyToken(busd.address, getBigNumber(100, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr3).buyToken(usdt.address, getBigNumber(100, TOKEN_DECIMAL.USDT))
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
-    it('round 2 - Exceeding purchase token limit', async () => {
+    it('Round 2 - Exceeding purchase token limit', async () => {
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(300, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr1).buyToken(
         usdc.address, 
@@ -450,7 +514,7 @@ describe('presale-test', () => {
 
       await usdc.connect(addr5).approve(presaleContract.address, getBigNumber(1000, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr5).buyToken(usdc.address, getBigNumber(1000, TOKEN_DECIMAL.USDC))).to.be.not.reverted
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
     it('FCFS - Token purchases can be made if whitelist address and fcfsRequireWhitelist flag is false', async () => {      
@@ -459,7 +523,7 @@ describe('presale-test', () => {
       
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.not.reverted
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
     it('FCFS - Token purchases cannot be made if not whitelist address and fcfsRequireWhitelist flag is true', async () => {
@@ -474,7 +538,7 @@ describe('presale-test', () => {
     it('FCFS - Token purchases can be made if whitelist address and fcfsRequireWhitelist flag is true', async () => {
       await usdc.connect(addr1).approve(presaleContract.address, getBigNumber(100, TOKEN_DECIMAL.USDC))
       await expect(presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(100, TOKEN_DECIMAL.USDC))).to.be.not.reverted
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
     it('FCFS - purchase tokens1 ', async () => {
@@ -484,7 +548,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr1).buyToken(usdc.address, getBigNumber(2800, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr1).buyToken(busd.address, getBigNumber(500, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr1).buyToken(usdt.address, getBigNumber(500, TOKEN_DECIMAL.USDT))
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
     
     it('FCFS - purchase tokens2 ', async () => {
@@ -494,7 +558,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr2).buyToken(usdc.address, getBigNumber(3000, TOKEN_DECIMAL.USDC))
       await presaleContract.connect(addr2).buyToken(busd.address, getBigNumber(500, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr2).buyToken(usdt.address, getBigNumber(500, TOKEN_DECIMAL.USDT))
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
     })
 
 
@@ -521,7 +585,7 @@ describe('presale-test', () => {
       await presaleContract.connect(addr3).buyToken(busd.address, getBigNumber(500, TOKEN_DECIMAL.BUSD))
       await presaleContract.connect(addr3).buyToken(usdt.address, getBigNumber(500, TOKEN_DECIMAL.USDT))
 
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
 
     })
 
@@ -550,8 +614,8 @@ describe('presale-test', () => {
       await loopContract.approve(presaleContract.address, getBigNumber(1000))
       await loopContract.transfer(presaleContract.address, getBigNumber(1000))
 
-      console.log('Sold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
-      console.log('Loop Tokens in Presale Contract before withdrawal:', formatUnits(await loopContract.balanceOf(presaleContract.address)))
+      console.log('\tSold Token Amount:', formatUnits(await presaleContract.getSoldToken()))
+      console.log('\tLoop Tokens in Presale Contract before withdrawal:', formatUnits(await loopContract.balanceOf(presaleContract.address)))
 
       
       await presaleContract.withdrawAllToken(
@@ -566,11 +630,11 @@ describe('presale-test', () => {
       //We expect whatever has been sold remains in the contract
       expect(await loopContract.balanceOf(presaleContract.address)).to.equal(await presaleContract.getSoldToken())
 
-      console.log('Loop Tokens in Presale Contract after withdrawal:', formatUnits(await loopContract.balanceOf(presaleContract.address)))
-      console.log('LOOP in owner:', formatUnits(await loopContract.balanceOf(await addrs[0].getAddress())))
-      console.log('USDC in owner:', formatUnits(await usdc.balanceOf(await addrs[0].getAddress()), TOKEN_DECIMAL.USDC))
-      console.log('BUSD in owner:', formatUnits(await busd.balanceOf(await addrs[0].getAddress()), TOKEN_DECIMAL.BUSD))
-      console.log('USDT in owner:', formatUnits(await usdt.balanceOf(await addrs[0].getAddress()), TOKEN_DECIMAL.USDT))
+      console.log('\tLoop Tokens in Presale Contract after withdrawal:', formatUnits(await loopContract.balanceOf(presaleContract.address)))
+      console.log('\tLOOP in owner:', formatUnits(await loopContract.balanceOf(await addrs[0].getAddress())))
+      console.log('\tUSDC in owner:', formatUnits(await usdc.balanceOf(await addrs[0].getAddress()), TOKEN_DECIMAL.USDC))
+      console.log('\tBUSD in owner:', formatUnits(await busd.balanceOf(await addrs[0].getAddress()), TOKEN_DECIMAL.BUSD))
+      console.log('\tUSDT in owner:', formatUnits(await usdt.balanceOf(await addrs[0].getAddress()), TOKEN_DECIMAL.USDT))
     })
   })
 
@@ -590,12 +654,12 @@ describe('presale-test', () => {
       const loopToken5 = await loopContract.balanceOf(await addr5.getAddress())
       const loopTokenPresale = await loopContract.balanceOf(presaleContract.address)
 
-      console.log('LOOP in addr1:', formatUnits(loopToken1))
-      console.log('LOOP in addr2:', formatUnits(loopToken2))
-      console.log('LOOP in addr3:', formatUnits(loopToken3))
-      console.log('LOOP in addr4:', formatUnits(loopToken4))
-      console.log('LOOP in addr5:', formatUnits(loopToken5))
-      console.log('LOOP in Presale Contract:', formatUnits(loopTokenPresale))
+      console.log('\tLOOP in addr1:', formatUnits(loopToken1))
+      console.log('\tLOOP in addr2:', formatUnits(loopToken2))
+      console.log('\tLOOP in addr3:', formatUnits(loopToken3))
+      console.log('\tLOOP in addr4:', formatUnits(loopToken4))
+      console.log('\tLOOP in addr5:', formatUnits(loopToken5))
+      console.log('\tLOOP in Presale Contract:', formatUnits(loopTokenPresale))
 
       
       expect((await presaleContract.presaleList(await addr1.getAddress())).claimedLoopTokenAmount).to.equal(loopToken1)
@@ -618,8 +682,30 @@ describe('presale-test', () => {
     })
   })
 
+  describe('Change vesting period', async () => {
+    it('Invalid change to 3 tranches from 2 tranches - modify tranche 1 percentage', async () => {
+      await expect(presaleContract.modifyVestingSchedule(
+        [
+          {Percentage: 2000, Date: claimStart},
+          {Percentage: 6000, Date: claimStart2},
+          {Percentage: 2000, Date: claimStart3}
+        ]
+      )).to.be.revertedWith('User tried to modify earlier tranches of vesting schedule that created inconsistencies')
+    })
+
+    it('Valid change to 3 tranches from 2 tranches', async () => {
+      await expect(presaleContract.modifyVestingSchedule(
+        [
+          {Percentage: 5000, Date: claimStart},
+          {Percentage: 2500, Date: claimStart2},
+          {Percentage: 2500, Date: claimStart3}
+        ]
+      )).to.be.not.reverted
+    })
+  })
+
   describe('Claim Tokens: After 2nd Vest Date', async () => {
-    it('Claim tokens1: Addr1, Addr2 and Addr3 claims upon 2nd Vesting Date. No trading in between', async () => {
+    it('Claim tokens2: Addr1, Addr2 and Addr3 claims upon 2nd Vesting Date. No trading in between', async () => {
       await advanceBlockTimeStamp(claimStart2)
       
       await presaleContract.connect(addr1).claimToken()
@@ -634,12 +720,12 @@ describe('presale-test', () => {
       const loopToken5 = await loopContract.balanceOf(await addr5.getAddress())
       const loopTokenPresale = await loopContract.balanceOf(presaleContract.address)
 
-      console.log('LOOP in addr1:', formatUnits(loopToken1))
-      console.log('LOOP in addr2:', formatUnits(loopToken2))
-      console.log('LOOP in addr3:', formatUnits(loopToken3))
-      console.log('LOOP in addr4:', formatUnits(loopToken4))
-      console.log('LOOP in addr5:', formatUnits(loopToken5))
-      console.log('LOOP in Presale Contract:', formatUnits(loopTokenPresale))
+      console.log('\tLOOP in addr1:', formatUnits(loopToken1))
+      console.log('\tLOOP in addr2:', formatUnits(loopToken2))
+      console.log('\tLOOP in addr3:', formatUnits(loopToken3))
+      console.log('\tLOOP in addr4:', formatUnits(loopToken4))
+      console.log('\tLOOP in addr5:', formatUnits(loopToken5))
+      console.log('\tLOOP in Presale Contract:', formatUnits(loopTokenPresale))
 
       
       expect((await presaleContract.presaleList(await addr1.getAddress())).claimedLoopTokenAmount).to.equal(loopToken1)
@@ -647,6 +733,45 @@ describe('presale-test', () => {
       expect((await presaleContract.presaleList(await addr3.getAddress())).claimedLoopTokenAmount).to.equal(loopToken3)
     })
   })
+
+  describe('Claim Tokens: After 3nd Vest Date', async () => {
+    it('Claim tokens3: Addr1, Addr2, Addr3, Addr4 claims upon 2nd Vesting Date. No trading in between', async () => {
+      await advanceBlockTimeStamp(claimStart3)
+      
+      await presaleContract.connect(addr1).claimToken()
+      await presaleContract.connect(addr2).claimToken()
+      await presaleContract.connect(addr3).claimToken()
+      await presaleContract.connect(addr5).claimToken()
+      
+
+      const loopToken1 = await loopContract.balanceOf(await addr1.getAddress())
+      const loopToken2 = await loopContract.balanceOf(await addr2.getAddress())
+      const loopToken3 = await loopContract.balanceOf(await addr3.getAddress())
+      const loopToken4 = await loopContract.balanceOf(await addr4.getAddress())
+      const loopToken5 = await loopContract.balanceOf(await addr5.getAddress())
+      const loopTokenPresale = await loopContract.balanceOf(presaleContract.address)
+
+      console.log('\tLOOP in addr1:', formatUnits(loopToken1))
+      console.log('\tLOOP in addr2:', formatUnits(loopToken2))
+      console.log('\tLOOP in addr3:', formatUnits(loopToken3))
+      console.log('\tLOOP in addr4:', formatUnits(loopToken4))
+      console.log('\tLOOP in addr5:', formatUnits(loopToken5))
+      console.log('\tLOOP in Presale Contract:', formatUnits(loopTokenPresale))
+
+      
+      expect((await presaleContract.presaleList(await addr1.getAddress())).claimedLoopTokenAmount).to.equal(loopToken1)
+      expect((await presaleContract.presaleList(await addr2.getAddress())).claimedLoopTokenAmount).to.equal(loopToken2)
+      expect((await presaleContract.presaleList(await addr3.getAddress())).claimedLoopTokenAmount).to.equal(loopToken3)
+      expect((await presaleContract.presaleList(await addr5.getAddress())).claimedLoopTokenAmount).to.equal(loopToken5)
+    })
+  })
+
+  describe('Claim Tokens: After 3nd Vest Date and already claimed everything', async () => {
+    it('No claimToken amount: Addr1 already claimed everything', async () => {
+      await expect(presaleContract.connect(addr1).claimToken()).to.be.revertedWith('No claimToken amount')
+    })
+  })
+
 
   describe('Give Back Tokens', async () => {
     it('Caller is not authorized', async () => {
@@ -679,7 +804,7 @@ describe('presale-test', () => {
         meme.address
       )
       expect(await meme.balanceOf(await addr1.getAddress())).to.equal(getBigNumber(5000))
-      console.log('MEME in addr1:', formatUnits(await meme.balanceOf(await addr1.getAddress())))
+      console.log('\tMEME in addr1:', formatUnits(await meme.balanceOf(await addr1.getAddress())))
     })
   })
 
@@ -693,7 +818,7 @@ describe('presale-test', () => {
       var tokenDecimals = 18;
       var buyTime;
 
-      //console.log("Buyer Address" + "\t" + "Buy Time" + "\t" + "Stablecoin Address" + "\t" + "USD VALUE")
+      console.log("\tBuyer Address" + "\t\t\t\t\t" + "Buy Time" + "\t\t\t\t\t\t\t" + "Stablecoin Address" + "\t\t\t\t" + "USD VALUE")
 
       for (let bH of buyHistory) {
         switch(bH.stablecoinAddress) {
@@ -714,7 +839,7 @@ describe('presale-test', () => {
         }
         buyTime = new Date(Number(bH.buyTime) * 1000)
 
-        //console.log(bH.buyerAddress + "\t" + buyTime + "\t" + bH.stablecoinAddress + "\t" + formatUnits(bH.stableTokenAmount, tokenDecimals))
+        console.log("\t" + bH.buyerAddress + "\t" + buyTime + "\t" + bH.stablecoinAddress + "\t" + formatUnits(bH.stableTokenAmount, tokenDecimals))
       }
 
     })
